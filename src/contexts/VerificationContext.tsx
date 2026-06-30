@@ -3,6 +3,7 @@ import { VerificationReport } from '../types'
 import { MOCK_REPORTS } from '../data/mockData'
 import { generateId, getScoreStatus } from '../lib/utils'
 import { KeywordRule, findBestRuleMatch, calibrateConfidence } from '../lib/keywordScorer'
+import { queryFactCheckApi } from '../lib/factCheckApi'
 
 interface VerificationContextValue {
   reports: VerificationReport[]
@@ -588,6 +589,9 @@ export function VerificationProvider({ children }: { children: React.ReactNode }
     setAnalysisStep(0)
     setCurrentReport(null)
 
+    // Query Google Fact Check API in parallel to hide network latency
+    const apiPromise = queryFactCheckApi(input, type)
+
     // Simulate pipeline steps
     const stepDurations = [800, 1200, 1000, 600, 400]
     for (let i = 0; i < stepDurations.length; i++) {
@@ -595,7 +599,12 @@ export function VerificationProvider({ children }: { children: React.ReactNode }
       await new Promise(resolve => setTimeout(resolve, stepDurations[i]))
     }
 
-    const report = simulateAnalysis(input, type)
+    // Retrieve API report or fall back to local rule-based match
+    let report = await apiPromise
+    if (!report) {
+      report = simulateAnalysis(input, type)
+    }
+
     setCurrentReport(report)
     setReports(prev => [report, ...prev])
     setIsAnalyzing(false)
