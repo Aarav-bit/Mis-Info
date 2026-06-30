@@ -200,16 +200,7 @@ export async function queryFactCheckApi(
     let reasoning = `Based on reports published by authorized fact-checking platforms, this claim has been evaluated and scored. Check the linked sources below for the full analysis of the claim.`
 
     if (isMismatch) {
-      trustScore = 55 // Needs Verification
-      confidence = 45 // Lower confidence
-      if (subjectMismatch) {
-        summary = `The search matched a fact-check regarding a different topic or subject ("${claim.text}"). Since the contexts do not align, we cannot verify your claim using this match.`
-      } else if (isMediaMismatch) {
-        summary = `The search matched a fact-check debunking viral media (like a simulation or video) associated with this topic. While the specific media is rated as "${reviews[0].textualRating}", the underlying event itself is documented.`
-      } else {
-        summary = `The matched fact-check matches loosely but has low similarity to your query. We cannot verify your claim using this match.`
-      }
-      reasoning = `A context mismatch was detected. The fact-checking report by ${uniquePublishers.join(', ')} is evaluating a different claim ("${claim.text}"), rather than the factual statement you entered. Therefore, the status is set to Needs Verification.`
+      return null
     }
 
     const status = getScoreStatus(trustScore) as VerificationReport['status']
