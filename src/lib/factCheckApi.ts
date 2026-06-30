@@ -1,6 +1,34 @@
 import { VerificationReport, Source, CredibilityFactor } from '../types'
 import { generateId, getScoreStatus } from './utils'
 
+// Helper to extract clean token sets from a text string (with basic stemming)
+function getImportantTokens(text: string): Set<string> {
+  const stopWords = new Set(['the', 'a', 'an', 'on', 'in', 'at', 'to', 'for', 'of', 'and', 'or', 'is', 'was', 'were', 'be', 'been', 'being', 'have', 'has', 'had', 'do', 'does', 'did', 'first', 'country', 'few', 'years', 'ago', 'near', 'with', 'about', 'by', 'from', 'this', 'that', 'these', 'those', 'some', 'any', 'all', 'both', 'each', 'every', 'other', 'another', 'such', 'only', 'own', 'same', 'so', 'than', 'too', 'very', 'just', 'more', 'most'])
+  
+  return new Set(
+    text
+      .toLowerCase()
+      .replace(/[^\w\s-]/g, ' ')
+      .split(/\s+/)
+      .map(token => {
+        let clean = token.trim()
+        if (clean.endsWith('s') && clean.length > 3) clean = clean.slice(0, -1)
+        if (clean.endsWith('ed') && clean.length > 4) clean = clean.slice(0, -2)
+        if (clean.endsWith('ing') && clean.length > 5) clean = clean.slice(0, -3)
+        return clean
+      })
+      .filter(token => token.length > 2 && !stopWords.has(token))
+  )
+}
+
+// Compute Jaccard similarity of two sets of tokens
+function calculateJaccardSimilarity(setA: Set<string>, setB: Set<string>): number {
+  if (setA.size === 0 || setB.size === 0) return 0
+  const intersection = new Set([...setA].filter(x => setB.has(x)))
+  const union = new Set([...setA, ...setB])
+  return intersection.size / union.size
+}
+
 // Helper to guess the topic category of a claim
 function guessTopic(text: string): string {
   const t = text.toLowerCase()
@@ -124,7 +152,8 @@ export async function queryFactCheckApi(
       return null
     }
 
-    // Detect mismatch: User asks about the event, but the API returned a review about fake media (video/photo)
+    // Detect mismatch:
+    // 1. Media mismatch: User asks about the event, but the API returned a review about fake media (video/photo)
     const mediaTerms = ['video', 'clip', 'simulation', 'animation', 'cgi', 'footage', 'image', 'photo', 'picture', 'graphic', 'recording', 'visual', 'audio', 'thumbnail']
     const claimLower = claim.text.toLowerCase()
     const queryLower = query.toLowerCase()
@@ -132,6 +161,31 @@ export async function queryFactCheckApi(
     const claimHasMedia = mediaTerms.some(term => claimLower.includes(term))
     const queryHasMedia = mediaTerms.some(term => queryLower.includes(term))
     const isMediaMismatch = claimHasMedia && !queryHasMedia
+
+    // 2. Subject entity mismatch (e.g., China vs India/ISRO)
+    const queryTokens = getImportantTokens(query)
+    const claimTokens = getImportantTokens(claim.text)
+    
+    const hasChina1 = queryTokens.has('china')
+    const hasChina2 = claimTokens.has('china')
+    const hasIndia1 = queryTokens.has('india') || queryLower.includes('chandrayaan') || queryLower.includes('isro')
+    const hasIndia2 = claimTokens.has('india') || claimLower.includes('chandrayaan') || claimLower.includes('isro')
+    const hasRussia1 = queryTokens.has('russia') || queryTokens.has('russian')
+    const hasRussia2 = claimTokens.has('russia') || claimTokens.has('russian')
+    const hasUsa1 = queryTokens.has('usa') || queryTokens.has('us') || queryTokens.has('america') || queryTokens.has('american')
+    const hasUsa2 = claimTokens.has('usa') || claimTokens.has('us') || claimTokens.has('america') || claimTokens.has('american')
+    
+    const subjectMismatch = 
+      (hasChina1 !== hasChina2) || 
+      (hasIndia1 !== hasIndia2) ||
+      (hasRussia1 !== hasRussia2) ||
+      (hasUsa1 !== hasUsa2)
+
+    // 3. Jaccard token similarity check
+    const jaccard = calculateJaccardSimilarity(queryTokens, claimTokens)
+    const isLowSimilarity = jaccard < 0.35
+
+    const isMismatch = isMediaMismatch || subjectMismatch || isLowSimilarity
 
     // Synthesize publishers list
     const publishers = reviews.map((r) => r.publisher.name)
@@ -145,11 +199,17 @@ export async function queryFactCheckApi(
     let summary = `This claim was analyzed by ${uniquePublishers.join(', ')}. The general consensus rating is: "${reviews[0].textualRating}".`
     let reasoning = `Based on reports published by authorized fact-checking platforms, this claim has been evaluated and scored. Check the linked sources below for the full analysis of the claim.`
 
-    if (isMediaMismatch) {
+    if (isMismatch) {
       trustScore = 55 // Needs Verification
       confidence = 45 // Lower confidence
-      summary = `The search matched a fact-check debunking viral media (like a simulation or video) associated with this topic. While the specific media is rated as "${reviews[0].textualRating}", the underlying event itself is documented.`
-      reasoning = `A context mismatch was detected. The fact-checking report by ${uniquePublishers.join(', ')} is evaluating a viral simulation or media file ("${claim.text}"), rather than the factual statement you entered. Therefore, the status is set to Needs Verification.`
+      if (subjectMismatch) {
+        summary = `The search matched a fact-check regarding a different topic or subject ("${claim.text}"). Since the contexts do not align, we cannot verify your claim using this match.`
+      } else if (isMediaMismatch) {
+        summary = `The search matched a fact-check debunking viral media (like a simulation or video) associated with this topic. While the specific media is rated as "${reviews[0].textualRating}", the underlying event itself is documented.`
+      } else {
+        summary = `The matched fact-check matches loosely but has low similarity to your query. We cannot verify your claim using this match.`
+      }
+      reasoning = `A context mismatch was detected. The fact-checking report by ${uniquePublishers.join(', ')} is evaluating a different claim ("${claim.text}"), rather than the factual statement you entered. Therefore, the status is set to Needs Verification.`
     }
 
     const status = getScoreStatus(trustScore) as VerificationReport['status']
@@ -175,19 +235,21 @@ export async function queryFactCheckApi(
     const credibilityFactors: CredibilityFactor[] = [
       {
         name: 'Independent Verification',
-        score: isMediaMismatch ? 50 : 95,
-        description: isMediaMismatch 
-          ? `Fact-checkers evaluated associated media: ${uniquePublishers.join(', ')}`
+        score: isMismatch ? 50 : 95,
+        description: isMismatch 
+          ? `Fact-checkers evaluated associated claim: ${uniquePublishers.join(', ')}`
           : `Analyzed by registered third-party fact-checkers: ${uniquePublishers.join(', ')}`,
-        impact: isMediaMismatch ? 'neutral' : 'positive'
+        impact: isMismatch ? 'neutral' : 'positive'
       },
       {
         name: 'Context Matching',
-        score: isMediaMismatch ? 30 : 95,
-        description: isMediaMismatch
-          ? 'Warning: The fact-check targets a viral video/image, not your text claim.'
+        score: isMismatch ? (subjectMismatch ? 15 : isLowSimilarity ? 30 : 45) : 95,
+        description: isMismatch
+          ? subjectMismatch
+            ? 'Critical Warning: The fact-check is about a completely different subject (e.g. different country).'
+            : 'Warning: The fact-check targets a viral video/image or loose context, not your text claim.'
           : 'High: The fact-check matches the context of your query.',
-        impact: isMediaMismatch ? 'negative' : 'positive'
+        impact: isMismatch ? 'negative' : 'positive'
       }
     ]
 
