@@ -3,7 +3,7 @@ import { VerificationReport } from '../types'
 import { MOCK_REPORTS } from '../data/mockData'
 import { generateId, getScoreStatus } from '../lib/utils'
 import { KeywordRule, findBestRuleMatch, calibrateConfidence } from '../lib/keywordScorer'
-import { queryFactCheckApi } from '../lib/factCheckApi'
+import { verifyClaim } from '../lib/factCheckApi'
 
 interface VerificationContextValue {
   reports: VerificationReport[]
@@ -589,8 +589,8 @@ export function VerificationProvider({ children }: { children: React.ReactNode }
     setAnalysisStep(0)
     setCurrentReport(null)
 
-    // Query Google Fact Check API in parallel to hide network latency
-    const apiPromise = queryFactCheckApi(input, type)
+    // Query hybrid verification engine in parallel to hide network latency
+    const apiPromise = verifyClaim(input, type)
 
     // Simulate pipeline steps
     const stepDurations = [800, 1200, 1000, 600, 400]

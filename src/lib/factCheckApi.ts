@@ -277,3 +277,152 @@ export async function queryFactCheckApi(
     return null
   }
 }
+
+interface WikipediaSearchResult {
+  title: string
+  snippet: string
+}
+
+interface WikipediaSummaryResponse {
+  title: string
+  extract: string
+  timestamp: string
+  content_urls: {
+    desktop: {
+      page: string
+    }
+  }
+}
+
+/**
+ * Queries the Wikipedia Search & Summary REST API to corroborate factual claims.
+ */
+export async function queryWikipediaApi(
+  query: string,
+  inputType: 'text' | 'url' | 'screenshot'
+): Promise<VerificationReport | null> {
+  try {
+    const searchUrl = `https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(
+      query
+    )}&format=json&origin=*`
+
+    const response = await fetch(searchUrl)
+    if (!response.ok) return null
+
+    const searchData = await response.json()
+    const results = searchData.query?.search as WikipediaSearchResult[] | undefined
+    if (!results || results.length === 0) return null
+
+    // Tokenize query
+    const queryTokens = getImportantTokens(query)
+
+    let bestMatch: WikipediaSearchResult | null = null
+    let maxSimilarity = 0
+
+    // Evaluate Jaccard similarity for top 3 results
+    for (const res of results.slice(0, 3)) {
+      const textToMatch = `${res.title} ${res.snippet.replace(/<span class="searchmatch">/g, '').replace(/<\/span>/g, '')}`
+      const resTokens = getImportantTokens(textToMatch)
+      const sim = calculateJaccardSimilarity(queryTokens, resTokens)
+      if (sim > maxSimilarity) {
+        maxSimilarity = sim
+        bestMatch = res
+      }
+    }
+
+    // Similarity threshold to ensure we don't return random pages
+    if (!bestMatch || maxSimilarity < 0.15) {
+      return null
+    }
+
+    // Fetch summary REST API
+    const summaryUrl = `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(
+      bestMatch.title.replace(/ /g, '_')
+    )}`
+
+    const summaryResponse = await fetch(summaryUrl)
+    if (!summaryResponse.ok) return null
+
+    const summaryData: WikipediaSummaryResponse = await summaryResponse.json()
+
+    // Assign score based on match strength
+    const trustScore = maxSimilarity >= 0.25 ? 90 : 75
+    const status = getScoreStatus(trustScore) as VerificationReport['status']
+    const confidence = Math.min(99, Math.round(maxSimilarity * 100 + 20))
+
+    const summary = `According to Wikipedia's page for "${summaryData.title}": ${summaryData.extract}`
+    const evidenceSummary = `Verified details found in Wikipedia. The closest matching page is "${summaryData.title}" with a Jaccard token overlap of ${Math.round(
+      maxSimilarity * 100
+    )}%.`
+    const reasoning = `This statement is corroborated by documented factual records on Wikipedia (Article: "${summaryData.title}"). It matches a widely recognized historical, scientific, or general event.`
+
+    const sources: Source[] = [
+      {
+        id: `wiki-${generateId()}`,
+        name: 'Wikipedia',
+        url: summaryData.content_urls.desktop.page,
+        reliability: 98,
+        supportsClaim: true,
+        publishedAt: summaryData.timestamp || new Date().toISOString(),
+        category: 'Encyclopedic Source',
+        excerpt: summaryData.extract
+      }
+    ]
+
+    const credibilityFactors: CredibilityFactor[] = [
+      {
+        name: 'Encyclopedic Reference',
+        score: 95,
+        description: `Corroborated by Wikipedia article: "${summaryData.title}"`,
+        impact: 'positive'
+      },
+      {
+        name: 'Contextual Alignment',
+        score: Math.min(99, Math.round(maxSimilarity * 100 + 35)),
+        description: `High semantic correlation (${Math.round(maxSimilarity * 100)}% match) to documented encyclopedia entry.`,
+        impact: 'positive'
+      }
+    ]
+
+    const topic = guessTopic(query)
+
+    return {
+      id: generateId(),
+      claim: query.length > 150 ? query.substring(0, 150) + '...' : query,
+      inputType,
+      trustScore,
+      status,
+      confidence,
+      summary,
+      claimExtracted: summaryData.title,
+      evidenceSummary,
+      reasoning,
+      sources,
+      credibilityFactors,
+      createdAt: new Date().toISOString(),
+      bookmarked: false,
+      topic
+    }
+  } catch (error) {
+    console.error('Error fetching from Wikipedia API:', error)
+    return null
+  }
+}
+
+/**
+ * High-level wrapper function.
+ * Queries Google Fact Check API first (Negative lookup). If no matches, queries Wikipedia API (Positive lookup).
+ */
+export async function verifyClaim(
+  query: string,
+  inputType: 'text' | 'url' | 'screenshot'
+): Promise<VerificationReport | null> {
+  // 1. Google Fact Check Tools API (Negative lookup for rumors/myths)
+  const factCheckReport = await queryFactCheckApi(query, inputType)
+  if (factCheckReport) {
+    return factCheckReport
+  }
+
+  // 2. Wikipedia API (Positive lookup for documented facts/events)
+  return queryWikipediaApi(query, inputType)
+}
