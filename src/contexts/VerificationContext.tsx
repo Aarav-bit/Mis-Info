@@ -627,11 +627,17 @@ export function VerificationProvider({ children }: { children: React.ReactNode }
     const consensus = analyzeConsensus(allSources)
 
     // ── STEP 5: Trust Score Engine ────────────────────────────────────────────
-    // Pick the best source reliability score from what we found
     setAnalysisStep(5)
-    const sourceReliability = allSources.length > 0
-      ? Math.round(allSources.reduce((s, src) => s + src.reliability, 0) / allSources.length)
-      : 0
+
+    // sourceReliability = WHAT reliable sources say about this claim (not how reliable they are).
+    // If a fact-checker (reliability=95) says the claim is FALSE, the claim's sourceReliability
+    // should be LOW (~12), not HIGH (95). evidenceReport.trustScore already encodes this correctly
+    // (ratingToScore("False") ≈ 12, ratingToScore("True") ≈ 93).
+    const sourceReliability = (() => {
+      if (evidenceReport) return evidenceReport.trustScore          // Fact-check verdict (e.g. 12 = False, 93 = True)
+      if (knowledgeReport) return knowledgeReport.trustScore        // Knowledge base corroboration
+      return 0
+    })()
 
     // Semantic match: best similarity signal from either retrieval layer
     const evidenceSemantic = evidenceReport ? 60 : 0
@@ -639,6 +645,11 @@ export function VerificationProvider({ children }: { children: React.ReactNode }
       ? Math.min(99, (knowledgeReport.confidence ?? 50))
       : 0
     const semanticMatch = Math.max(evidenceSemantic, knowledgeSemantic)
+
+    // evidenceAgreement = cross-source consensus (0–100).
+    // consensus.agreement is already directional: 0 = all sources oppose claim, 100 = all support.
+    // confidenceBoost adjusts the displayed confidence field only — do NOT mix it into the formula.
+    const evidenceAgreement = Math.max(0, Math.min(99, consensus.agreement))
 
     // Rule engine: fall back to local keyword database if no API reports found
     let ruleScore = 50
@@ -654,7 +665,7 @@ export function VerificationProvider({ children }: { children: React.ReactNode }
 
     const scoreResult = computeTrustScore({
       sourceReliability,
-      evidenceAgreement: Math.min(99, consensus.agreement + consensus.confidenceBoost),
+      evidenceAgreement,
       semanticMatch,
       linguisticRisk: linguisticResult.safetyScore,
       ruleEngine: ruleScore,
