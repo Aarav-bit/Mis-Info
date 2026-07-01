@@ -184,16 +184,20 @@ export function ReportPage() {
           </CardTitle>
         </CardHeader>
         <CardContent className="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
-          {report.credibilityFactors.map((factor, i) => (
-            <div key={i} className="space-y-1.5 border border-white/5 rounded-lg p-4 bg-black/10">
-              <div className="flex justify-between items-center text-xs font-mono">
-                <span className="text-white uppercase font-bold">{factor.name}</span>
-                <span className="text-[#D0FF00]">{factor.score}/100</span>
+          {report.credibilityFactors.map((factor, i) => {
+            const scoreColorClass = factor.score >= 75 ? 'text-green-400' : factor.score >= 50 ? 'text-yellow-400' : 'text-red-400'
+            const barBgClass = factor.score >= 75 ? 'bg-green-500' : factor.score >= 50 ? 'bg-yellow-500' : 'bg-red-500'
+            return (
+              <div key={i} className="space-y-1.5 border border-white/5 rounded-lg p-4 bg-black/10">
+                <div className="flex justify-between items-center text-xs font-mono">
+                  <span className="text-white uppercase font-bold">{factor.name}</span>
+                  <span className={scoreColorClass}>{factor.score}/100</span>
+                </div>
+                <Progress value={factor.score} size="sm" barClassName={barBgClass} className="bg-white/5" />
+                <p className="text-[11px] text-[#8E8A9F] leading-normal pt-1">{factor.description}</p>
               </div>
-              <Progress value={factor.score} size="sm" barClassName="bg-[#D0FF00]" className="bg-white/5" />
-              <p className="text-[11px] text-[#8E8A9F] leading-normal pt-1">{factor.description}</p>
-            </div>
-          ))}
+            )
+          })}
         </CardContent>
       </Card>
 

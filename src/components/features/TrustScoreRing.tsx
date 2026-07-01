@@ -11,9 +11,9 @@ interface TrustScoreRingProps {
 }
 
 function getScoreColors(score: number): [string, string] {
-  if (score >= 75) return ['#D0FF00', '#8116E0'] // Premium Copper stops
-  if (score >= 50) return ['#FEFFFC', '#8E8A9F'] // Warm Beige/Gray stops
-  return ['#ef4444', '#b91c1c'] // Danger red stops
+  if (score >= 75) return ['#22c55e', '#15803d'] // Neon green stops
+  if (score >= 50) return ['#eab308', '#ca8a04'] // Vibrant yellow stops
+  return ['#ef4444', '#b91c1c'] // Alert red stops
 }
 
 export function TrustScoreRing({ score, size = 180, strokeWidth = 10, className, showLabel = true }: TrustScoreRingProps) {
@@ -24,7 +24,8 @@ export function TrustScoreRing({ score, size = 180, strokeWidth = 10, className,
   const gradientId = `score-gradient-${score}`
   
   const statusText = score >= 80 ? 'Verified' : score >= 65 ? 'Likely Credible' : score >= 40 ? 'Needs Verification' : 'Likely False'
-  const textClassColor = score >= 75 ? 'text-[#D0FF00]' : score >= 50 ? 'text-[#FEFFFC]' : 'text-red-400'
+  const textClassColor = score >= 75 ? 'text-green-400' : score >= 50 ? 'text-yellow-400' : 'text-red-400'
+
 
   return (
     <div className={cn('relative inline-flex flex-col items-center', className)}>
