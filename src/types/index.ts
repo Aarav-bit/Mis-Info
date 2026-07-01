@@ -18,6 +18,14 @@ export interface CredibilityFactor {
   impact: 'positive' | 'negative' | 'neutral'
 }
 
+export interface ScoreBreakdown {
+  sourceReliability: number    // 0-100, weighted 35%
+  evidenceAgreement: number    // 0-100, weighted 25%
+  semanticMatch: number        // 0-100, weighted 20%
+  linguisticRisk: number       // 0-100, weighted 10% (higher = safer)
+  ruleEngine: number           // 0-100, weighted 10%
+}
+
 export interface VerificationReport {
   id: string
   claim: string
@@ -31,6 +39,7 @@ export interface VerificationReport {
   reasoning: string
   sources: Source[]
   credibilityFactors: CredibilityFactor[]
+  scoreBreakdown?: ScoreBreakdown
   createdAt: string
   bookmarked: boolean
   topic: string

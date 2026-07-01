@@ -3,7 +3,12 @@ import { VerificationReport } from '../types'
 import { MOCK_REPORTS } from '../data/mockData'
 import { generateId, getScoreStatus } from '../lib/utils'
 import { KeywordRule, findBestRuleMatch, calibrateConfidence } from '../lib/keywordScorer'
-import { verifyClaim } from '../lib/factCheckApi'
+import { extractClaim } from '../lib/claimExtractor'
+import { analyzeLinguisticRisk } from '../lib/linguisticRisk'
+import { queryEvidenceEngine } from '../lib/evidenceRetrieval'
+import { queryKnowledgeLayer } from '../lib/knowledgeRetrieval'
+import { analyzeConsensus } from '../lib/consensusEngine'
+import { computeTrustScore } from '../lib/trustScoreEngine'
 
 interface VerificationContextValue {
   reports: VerificationReport[]
@@ -589,20 +594,120 @@ export function VerificationProvider({ children }: { children: React.ReactNode }
     setAnalysisStep(0)
     setCurrentReport(null)
 
-    // Query hybrid verification engine in parallel to hide network latency
-    const apiPromise = verifyClaim(input, type)
+    // ── STEP 1: Claim Extraction ──────────────────────────────────────────────
+    // Run synchronously before any network calls — strips emojis, spam CTAs,
+    // forwarded prefixes, and normalizes text.
+    setAnalysisStep(1)
+    const extracted = extractClaim(input)
+    const cleanQuery = extracted.normalized || extracted.cleaned || input
 
-    // Simulate pipeline steps
-    const stepDurations = [800, 1200, 1000, 600, 400]
-    for (let i = 0; i < stepDurations.length; i++) {
-      setAnalysisStep(i + 1)
-      await new Promise(resolve => setTimeout(resolve, stepDurations[i]))
+    // ── STEP 2: Linguistic Risk Analysis ─────────────────────────────────────
+    // Runs on the cleaned text to detect manipulation patterns, scams, clickbait.
+    setAnalysisStep(2)
+    const linguisticResult = analyzeLinguisticRisk(cleanQuery)
+
+    // ── STEP 3: Parallel Evidence + Knowledge Retrieval ──────────────────────
+    // Evidence Engine: Google Fact Check API + GDELT News (for recent claims)
+    // Knowledge Layer: Wikipedia + Wikidata + Open Library (for documented facts)
+    // Both run IN PARALLEL to minimize total latency.
+    setAnalysisStep(3)
+    const [evidenceReport, knowledgeReport] = await Promise.all([
+      queryEvidenceEngine(cleanQuery, type),
+      queryKnowledgeLayer(cleanQuery, type),
+    ])
+
+    await new Promise(resolve => setTimeout(resolve, 400)) // brief UI hold
+
+    // ── STEP 4: Consensus Engine ──────────────────────────────────────────────
+    setAnalysisStep(4)
+    const allSources = [
+      ...(evidenceReport?.sources ?? []),
+      ...(knowledgeReport?.sources ?? []),
+    ]
+    const consensus = analyzeConsensus(allSources)
+
+    // ── STEP 5: Trust Score Engine ────────────────────────────────────────────
+    // Pick the best source reliability score from what we found
+    setAnalysisStep(5)
+    const sourceReliability = allSources.length > 0
+      ? Math.round(allSources.reduce((s, src) => s + src.reliability, 0) / allSources.length)
+      : 0
+
+    // Semantic match: best similarity signal from either retrieval layer
+    const evidenceSemantic = evidenceReport ? 60 : 0
+    const knowledgeSemantic = knowledgeReport
+      ? Math.min(99, (knowledgeReport.confidence ?? 50))
+      : 0
+    const semanticMatch = Math.max(evidenceSemantic, knowledgeSemantic)
+
+    // Rule engine: fall back to local keyword database if no API reports found
+    let ruleScore = 50
+    if (!evidenceReport && !knowledgeReport) {
+      const ruleMatch = findBestRuleMatch(cleanQuery, new Map(
+        Array.from(RULE_DATABASE.entries()).map(([k, v]) => [k, v.keywords])
+      ))
+      if (ruleMatch) {
+        const entry = RULE_DATABASE.get(ruleMatch.ruleId)
+        ruleScore = entry ? entry.report.trustScore : 50
+      }
     }
 
-    // Retrieve API report or fall back to local rule-based match
-    let report = await apiPromise
-    if (!report) {
-      report = simulateAnalysis(input, type)
+    const scoreResult = computeTrustScore({
+      sourceReliability,
+      evidenceAgreement: Math.min(99, consensus.agreement + consensus.confidenceBoost),
+      semanticMatch,
+      linguisticRisk: linguisticResult.safetyScore,
+      ruleEngine: ruleScore,
+    })
+
+    // ── Assemble Final Report ─────────────────────────────────────────────────
+    // Merge sources and credibility factors from all layers
+    const mergedSources = allSources
+    const primaryReport = evidenceReport ?? knowledgeReport
+
+    // Credibility factors: trust score breakdown + consensus + linguistic risk
+    const mergedFactors = [
+      ...scoreResult.breakdownFactors,
+      {
+        name: 'Cross-Source Consensus',
+        score: Math.min(99, consensus.agreement + Math.max(0, consensus.confidenceBoost)),
+        description: consensus.explanation,
+        impact: consensus.verdict === 'high' ? 'positive' as const
+               : consensus.verdict === 'conflict' ? 'negative' as const
+               : 'neutral' as const,
+      },
+    ]
+
+    // Spam fast-path: if extracted claim is spam, override score
+    const finalTrustScore = extracted.isSpam
+      ? Math.min(scoreResult.trustScore, 20)
+      : scoreResult.trustScore
+
+    const finalStatus = getScoreStatus(finalTrustScore) as VerificationReport['status']
+
+    const summary = primaryReport?.summary
+      ?? (extracted.isSpam
+        ? 'This content shows strong indicators of spam or scam messaging.'
+        : `No specific fact-checks or knowledge base entries found. Trust score based on linguistic analysis. ${consensus.explanation}`)
+
+    const report: VerificationReport = {
+      id: generateId(),
+      claim: cleanQuery.length > 150 ? cleanQuery.substring(0, 150) + '…' : cleanQuery,
+      inputType: type,
+      trustScore: finalTrustScore,
+      status: finalStatus,
+      confidence: Math.min(95, scoreResult.confidence + (primaryReport ? 10 : 0)),
+      summary,
+      claimExtracted: (primaryReport?.claimExtracted ?? extracted.entities.join(', ')) || cleanQuery.slice(0, 80),
+      evidenceSummary: primaryReport?.evidenceSummary
+        ?? `Linguistic Risk: ${linguisticResult.riskLevel.toUpperCase()}. No external evidence sources matched this claim.`,
+      reasoning: scoreResult.explanation + (consensus.flagForReview ? ' ⚠️ Manual review recommended due to conflicting sources.' : ''),
+      sources: mergedSources,
+      credibilityFactors: mergedFactors,
+      scoreBreakdown: scoreResult.breakdown,
+      createdAt: new Date().toISOString(),
+      bookmarked: false,
+      topic: primaryReport?.topic ?? 'General',
     }
 
     setCurrentReport(report)
