@@ -27,7 +27,7 @@ export function Sidebar({ open, onToggle }: SidebarProps) {
 
   return (
     <motion.aside
-      animate={{ width: open ? 240 : 64 }}
+      animate={{ width: open ? 190 : 56 }}
       transition={{ duration: 0.3, ease: 'easeInOut' }}
       className="relative flex flex-col h-full border-r border-white/10 bg-[#1e272b] flex-shrink-0 overflow-hidden z-20"
     >
