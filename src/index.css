@@ -1,46 +1,48 @@
 @import "tailwindcss";
 
 @theme {
-  --color-primary: #2563EB;
-  --color-primary-light: #3B82F6;
-  --color-primary-dark: #1D4ED8;
-  --color-cyan: #06B6D4;
-  --color-cyan-light: #22D3EE;
-  --color-slate: #64748B;
+  --color-primary: #B58B63;
+  --color-primary-light: #c9a07b;
+  --color-primary-dark: #916843;
+  --color-cyan: #B58B63;
+  --color-cyan-light: #c9a07b;
+  --color-slate: #3D4D55;
   
-  --font-sans: 'Inter', 'SF Pro Display', system-ui, -apple-system, sans-serif;
-  --font-display: 'Inter', system-ui, sans-serif;
-  --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+  --font-display: 'Space Grotesk', sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
 
-  --color-background: hsl(var(--background));
-  --color-foreground: hsl(var(--foreground));
-  --color-card: hsl(var(--card));
-  --color-card-foreground: hsl(var(--card-foreground));
-  --color-popover: hsl(var(--popover));
-  --color-popover-foreground: hsl(var(--popover-foreground));
-  --color-secondary: hsl(var(--secondary));
-  --color-secondary-foreground: hsl(var(--secondary-foreground));
-  --color-muted: hsl(var(--muted));
-  --color-muted-foreground: hsl(var(--muted-foreground));
-  --color-accent: hsl(var(--accent));
-  --color-accent-foreground: hsl(var(--accent-foreground));
-  --color-destructive: hsl(var(--destructive));
-  --color-destructive-foreground: hsl(var(--destructive-foreground));
-  --color-border: hsl(var(--border));
-  --color-input: hsl(var(--input));
-  --color-ring: hsl(var(--ring));
+  --color-background: #1A1A1A;
+  --color-foreground: #C9C0B9;
+  --color-card: #253035;
+  --color-card-foreground: #C9C0B9;
+  --color-popover: #253035;
+  --color-popover-foreground: #C9C0B9;
+  --color-secondary: #3D4D55;
+  --color-secondary-foreground: #C9C0B9;
+  --color-muted: #2c383e;
+  --color-muted-foreground: #A79E9C;
+  --color-accent: #3D4D55;
+  --color-accent-foreground: #C9C0B9;
+  --color-destructive: #ef4444;
+  --color-destructive-foreground: #ffffff;
+  --color-border: rgba(255, 255, 255, 0.08);
+  --color-input: rgba(255, 255, 255, 0.05);
+  --color-ring: #B58B63;
 }
 
 @layer base {
   * {
     box-sizing: border-box;
-    border-color: hsl(var(--border));
+    border-color: rgba(255, 255, 255, 0.08);
   }
   
   html {
     scroll-behavior: smooth;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    background-color: #1A1A1A;
+    color: #C9C0B9;
   }
 
   body {
@@ -49,58 +51,48 @@
   }
 
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
-    --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
-    --primary: 221.2 83.2% 53.3%;
-    --primary-foreground: 210 40% 98%;
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
+    --background: 220 15% 10%;
+    --foreground: 24 10% 76%;
+    --card: 200 17% 18%;
+    --card-foreground: 24 10% 76%;
+    --popover: 200 17% 18%;
+    --popover-foreground: 24 10% 76%;
+    --primary: 31 35% 55%;
+    --primary-foreground: 220 15% 10%;
+    --secondary: 200 16% 29%;
+    --secondary-foreground: 24 10% 76%;
+    --muted: 200 17% 21%;
+    --muted-foreground: 12 5% 63%;
+    --accent: 200 16% 29%;
+    --accent-foreground: 24 10% 76%;
     --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 221.2 83.2% 53.3%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 0 0% 100% / 0.08;
+    --input: 0 0% 100% / 0.05;
+    --ring: 31 35% 55%;
     --radius: 0.5rem;
-    --chart-1: 12 76% 61%;
-    --chart-2: 173 58% 39%;
-    --chart-3: 197 37% 24%;
-    --chart-4: 43 74% 66%;
-    --chart-5: 27 87% 67%;
   }
 
   .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
-    --primary: 217.2 91.2% 59.8%;
-    --primary-foreground: 222.2 47.4% 11.2%;
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 224.3 76.3% 48%;
-    --chart-1: 220 70% 50%;
-    --chart-2: 160 60% 45%;
-    --chart-3: 30 80% 55%;
-    --chart-4: 280 65% 60%;
-    --chart-5: 340 75% 55%;
+    --background: 220 15% 10%;
+    --foreground: 24 10% 76%;
+    --card: 200 17% 18%;
+    --card-foreground: 24 10% 76%;
+    --popover: 200 17% 18%;
+    --popover-foreground: 24 10% 76%;
+    --primary: 31 35% 55%;
+    --primary-foreground: 220 15% 10%;
+    --secondary: 200 16% 29%;
+    --secondary-foreground: 24 10% 76%;
+    --muted: 200 17% 21%;
+    --muted-foreground: 12 5% 63%;
+    --accent: 200 16% 29%;
+    --accent-foreground: 24 10% 76%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 0 0% 100% / 0.08;
+    --input: 0 0% 100% / 0.05;
+    --ring: 31 35% 55%;
   }
 }
 
@@ -110,25 +102,25 @@
   }
   
   .gradient-text {
-    background: linear-gradient(135deg, #2563EB, #06B6D4);
+    background: linear-gradient(135deg, #B58B63, #C9C0B9);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
   }
 
   .gradient-bg {
-    background: linear-gradient(135deg, #2563EB 0%, #06B6D4 100%);
+    background: linear-gradient(135deg, #B58B63 0%, #8b6843 100%);
   }
 
   .glass {
     backdrop-filter: blur(16px) saturate(180%);
-    background-color: rgba(255, 255, 255, 0.75);
-    border: 1px solid rgba(209, 213, 219, 0.3);
+    background-color: rgba(61, 77, 85, 0.25);
+    border: 1px solid rgba(255, 255, 255, 0.08);
   }
 
   .dark .glass {
-    background-color: rgba(17, 24, 39, 0.75);
-    border: 1px solid rgba(75, 85, 99, 0.3);
+    background-color: rgba(61, 77, 85, 0.25);
+    border: 1px solid rgba(255, 255, 255, 0.08);
   }
 
   .trust-score-ring {

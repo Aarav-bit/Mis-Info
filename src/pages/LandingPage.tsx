@@ -1,173 +1,718 @@
-﻿import React from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { motion } from 'framer-motion'
-import { Shield, ArrowRight, CheckCircle, Globe, Brain, Zap, BarChart3, Lock, Star, ChevronDown } from 'lucide-react'
-import { Button } from '../components/ui/Button'
-import { Badge } from '../components/ui/Badge'
+import { motion, useInView } from 'framer-motion'
+import {
+  Shield, ArrowRight, ArrowUpRight, CheckCircle, Globe,
+  Brain, Zap, FileText, Search, ScanLine, ChevronDown,
+  Star, BookOpen, Activity
+} from 'lucide-react'
 
+// ─── Color Palette ──────────────────────────────────────────────────────────
+// #1A1A1A  near-black background
+// #3D4D55  dark teal (containers, structural)
+// #A79E9C  warm medium gray (secondary text)
+// #C9C0B9  light warm beige (body text)
+// #B58B63  copper accent (CTAs, glows, highlights)
+
+// ─── Data ───────────────────────────────────────────────────────────────────
 const features = [
-  { icon: Brain, title: 'AI-Powered Analysis', description: 'Advanced LLM reasoning evaluates claims against thousands of trusted sources in seconds.' },
-  { icon: Globe, title: 'Source Verification', description: 'Cross-references 50+ premium news outlets, government sites, and academic databases.' },
-  { icon: BarChart3, title: 'Trust Score Engine', description: 'Proprietary scoring algorithm gives you a clear 0-100 credibility rating with explanations.' },
-  { icon: Lock, title: 'Privacy First', description: 'Your queries are never stored or used for training. Enterprise-grade security.' },
-  { icon: Zap, title: 'Real-time Speed', description: 'Get comprehensive verification reports in under 10 seconds.' },
-  { icon: CheckCircle, title: 'Explainable AI', description: 'Transparent reasoning so you understand why a claim scored the way it did.' },
+  {
+    icon: ScanLine,
+    title: 'Multi-Format Analysis',
+    description: 'Submit plain text, URLs, or screenshot images. Our engine ingests all formats and extracts verifiable claims automatically.',
+    tag: 'INGESTION',
+  },
+  {
+    icon: Activity,
+    title: '5-Stage Pipeline',
+    description: 'A structured verification lifecycle — Extract → Search → Evaluate → Score → Report — ensures nothing is missed.',
+    tag: 'PIPELINE',
+  },
+  {
+    icon: Brain,
+    title: 'Trust Score Engine',
+    description: 'Proprietary rule-based scoring combines keyword weights, negation penalties, and source rarity to calibrate confidence.',
+    tag: 'SCORING',
+  },
+  {
+    icon: Globe,
+    title: 'Source Cross-Reference',
+    description: '50+ trusted outlets, government databases, and academic repositories are queried in parallel for corroboration.',
+    tag: 'SOURCES',
+  },
+  {
+    icon: BookOpen,
+    title: 'Explainable Reports',
+    description: 'Every verdict includes structural reasoning, credibility factors, and supporting evidence — never a black box.',
+    tag: 'REPORTS',
+  },
+  {
+    icon: Zap,
+    title: 'Real-Time Speed',
+    description: 'Comprehensive verification in under 10 seconds. Built for journalists and researchers who work on deadline.',
+    tag: 'PERFORMANCE',
+  },
 ]
 
-const stats = [
-  { value: '2.4M+', label: 'Claims Verified' },
-  { value: '99.2%', label: 'Accuracy Rate' },
-  { value: '50+', label: 'Trusted Sources' },
-  { value: '<8s', label: 'Avg. Response Time' },
+const steps = [
+  { num: '01', label: 'Submit', desc: 'Paste text, a URL, or drop a screenshot.' },
+  { num: '02', label: 'Extract', desc: 'AI isolates the core verifiable claim.' },
+  { num: '03', label: 'Search', desc: 'Cross-references 50+ trusted databases.' },
+  { num: '04', label: 'Evaluate', desc: 'Credibility factors are weighed and scored.' },
+  { num: '05', label: 'Report', desc: 'Full reasoning and verdict delivered instantly.' },
 ]
 
-const examples = [
-  { claim: 'WHO releases new dengue advisory', score: 91, status: 'Verified', color: 'green' },
-  { claim: 'Fuel prices reduced nationwide', score: 65, status: 'Needs Verification', color: 'yellow' },
-  { claim: 'Government gives free laptops to all students', score: 34, status: 'Likely False', color: 'red' },
-]
+// ─── Animated Trust Score Gauge ──────────────────────────────────────────────
+function TrustGauge({ score = 87 }: { score?: number }) {
+  const [animated, setAnimated] = useState(false)
+  const ref = useRef<SVGCircleElement>(null)
+  const radius = 54
+  const circumference = 2 * Math.PI * radius
+  const offset = circumference - (score / 100) * circumference
 
-export function LandingPage() {
+  useEffect(() => {
+    const t = setTimeout(() => setAnimated(true), 600)
+    return () => clearTimeout(t)
+  }, [])
+
   return (
-    <div className="min-h-screen bg-background">
-      <nav className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-6 py-4 border-b border-border/50 glass">
-        <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-lg gradient-bg flex items-center justify-center">
-            <Shield size={16} className="text-white" />
+    <div className="relative flex items-center justify-center" style={{ width: 192, height: 192 }}>
+      <svg className="transform -rotate-90" width="192" height="192" viewBox="0 0 120 120">
+        <circle cx="60" cy="60" r={radius} fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="8" />
+        <circle
+          ref={ref}
+          cx="60" cy="60" r={radius}
+          fill="none"
+          stroke="#B58B63"
+          strokeWidth="8"
+          strokeLinecap="round"
+          strokeDasharray={circumference}
+          strokeDashoffset={animated ? offset : circumference}
+          style={{ transition: 'stroke-dashoffset 1.4s cubic-bezier(0.4, 0, 0.2, 1)' }}
+        />
+      </svg>
+      <div className="absolute inset-0 flex flex-col items-center justify-center">
+        <span style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 36, fontWeight: 700, color: '#fff', lineHeight: 1 }}>
+          {score}<span style={{ fontSize: 20, color: '#A79E9C' }}>%</span>
+        </span>
+        <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 11, letterSpacing: '0.08em', color: '#B58B63', marginTop: 4, textTransform: 'uppercase' }}>
+          Trust Score
+        </span>
+      </div>
+    </div>
+  )
+}
+
+// ─── Glass Analysis Card ─────────────────────────────────────────────────────
+function AnalysisCard() {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 30, rotateY: -8 }}
+      animate={{ opacity: 1, y: 0, rotateY: 0 }}
+      transition={{ delay: 0.6, duration: 0.9, ease: [0.25, 0.46, 0.45, 0.94] }}
+      style={{
+        perspective: 1000,
+        position: 'relative',
+        zIndex: 10,
+      }}
+    >
+      {/* Copper glow behind card */}
+      <div style={{
+        position: 'absolute', inset: -40,
+        background: 'radial-gradient(circle at center, rgba(181,139,99,0.18) 0%, transparent 70%)',
+        pointerEvents: 'none',
+        borderRadius: '50%',
+      }} />
+
+      <div style={{
+        background: 'rgba(255,255,255,0.03)',
+        backdropFilter: 'blur(16px)',
+        WebkitBackdropFilter: 'blur(16px)',
+        border: '1px solid rgba(255,255,255,0.10)',
+        borderRadius: 16,
+        padding: 32,
+        boxShadow: '0 32px 64px rgba(0,0,0,0.4)',
+        minWidth: 360,
+        maxWidth: 400,
+      }}>
+        {/* Window chrome */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 28, paddingBottom: 16, borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+          <div style={{ display: 'flex', gap: 8 }}>
+            {['#3D4D55','#3D4D55','#3D4D55'].map((c, i) => (
+              <div key={i} style={{ width: 12, height: 12, borderRadius: '50%', background: c }} />
+            ))}
           </div>
-          <span className="font-bold text-foreground">TrustLens <span className="gradient-text">AI</span></span>
+          <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 11, color: '#A79E9C', background: 'rgba(61,77,85,0.4)', padding: '4px 12px', borderRadius: 100, letterSpacing: '0.05em' }}>
+            ANALYSIS COMPLETE
+          </span>
         </div>
-        <div className="hidden md:flex items-center gap-6">
-          <a href="#features" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Features</a>
-          <a href="#how-it-works" className="text-sm text-muted-foreground hover:text-foreground transition-colors">How it works</a>
-          <Link to="/about" className="text-sm text-muted-foreground hover:text-foreground transition-colors">About</Link>
+
+        {/* Gauge */}
+        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 20 }}>
+          <TrustGauge score={87} />
         </div>
-        <Link to="/dashboard">
-          <Button size="sm" variant="gradient">Try Demo <ArrowRight size={14} /></Button>
+
+        {/* Verdict badge */}
+        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 24, marginTop: -12 }}>
+          <div style={{
+            display: 'flex', alignItems: 'center', gap: 8,
+            background: 'rgba(22,19,16,0.85)', backdropFilter: 'blur(8px)',
+            border: '1px solid rgba(181,139,99,0.35)',
+            borderRadius: 100, padding: '6px 18px',
+          }}>
+            <CheckCircle size={14} style={{ color: '#B58B63' }} />
+            <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 11, color: '#fff', letterSpacing: '0.12em', textTransform: 'uppercase' }}>
+              Verified Truth
+            </span>
+          </div>
+        </div>
+
+        {/* Source citations */}
+        <div>
+          <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, color: '#A79E9C', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 12 }}>
+            Source Citations
+          </div>
+          {[
+            { icon: FileText, name: 'Associated Press Archive', sub: 'Primary Source Match' },
+            { icon: BookOpen, name: 'Nature Journal Vol. 14', sub: 'Data Corroboration' },
+            { icon: Globe, name: 'Reuters Fact Check', sub: 'Cross-Reference' },
+          ].map((s, i) => (
+            <motion.div
+              key={i}
+              initial={{ opacity: 0, x: -12 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 1.0 + i * 0.15 }}
+              className="group"
+              style={{
+                display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                background: 'rgba(61,77,85,0.18)', border: '1px solid rgba(255,255,255,0.05)',
+                borderRadius: 6, padding: '10px 14px', marginBottom: 8,
+                cursor: 'pointer', transition: 'border-color 0.2s',
+              }}
+              whileHover={{ borderColor: 'rgba(181,139,99,0.4)', x: 2 }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                <s.icon size={16} style={{ color: '#A79E9C' }} />
+                <div>
+                  <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 13, color: '#C9C0B9', fontWeight: 500 }}>{s.name}</div>
+                  <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, color: '#A79E9C', marginTop: 2 }}>{s.sub}</div>
+                </div>
+              </div>
+              <ArrowUpRight size={14} style={{ color: '#B58B63', opacity: 0.6 }} />
+            </motion.div>
+          ))}
+        </div>
+      </div>
+    </motion.div>
+  )
+}
+
+// ─── Feature Card ────────────────────────────────────────────────────────────
+function FeatureCard({ feature, index }: { feature: typeof features[0]; index: number }) {
+  const ref = useRef(null)
+  const inView = useInView(ref, { once: true, margin: '-60px' })
+  const Icon = feature.icon
+
+  return (
+    <motion.div
+      ref={ref}
+      initial={{ opacity: 0, y: 24 }}
+      animate={inView ? { opacity: 1, y: 0 } : {}}
+      transition={{ delay: index * 0.1, duration: 0.5 }}
+      whileHover={{ y: -4, borderColor: 'rgba(181,139,99,0.45)' }}
+      style={{
+        background: 'rgba(61,77,85,0.2)',
+        border: '1px solid rgba(255,255,255,0.08)',
+        borderRadius: 12,
+        padding: 28,
+        cursor: 'default',
+        transition: 'border-color 0.3s',
+      }}
+    >
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
+        <div style={{
+          width: 40, height: 40, borderRadius: 8,
+          background: 'rgba(181,139,99,0.15)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+        }}>
+          <Icon size={20} style={{ color: '#B58B63' }} />
+        </div>
+        <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, color: '#B58B63', letterSpacing: '0.12em', background: 'rgba(181,139,99,0.12)', padding: '3px 8px', borderRadius: 4 }}>
+          {feature.tag}
+        </span>
+      </div>
+      <h3 style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 18, fontWeight: 600, color: '#C9C0B9', marginBottom: 10, lineHeight: 1.3 }}>
+        {feature.title}
+      </h3>
+      <p style={{ fontFamily: "'Inter', sans-serif", fontSize: 15, color: '#A79E9C', lineHeight: 1.7 }}>
+        {feature.description}
+      </p>
+    </motion.div>
+  )
+}
+
+// ─── Step Component ──────────────────────────────────────────────────────────
+function Step({ step, index, isLast }: { step: typeof steps[0]; index: number; isLast: boolean }) {
+  const ref = useRef(null)
+  const inView = useInView(ref, { once: true, margin: '-60px' })
+
+  return (
+    <motion.div
+      ref={ref}
+      initial={{ opacity: 0, x: -20 }}
+      animate={inView ? { opacity: 1, x: 0 } : {}}
+      transition={{ delay: index * 0.15, duration: 0.5 }}
+      style={{ display: 'flex', gap: 24, position: 'relative' }}
+    >
+      {/* Connector line */}
+      {!isLast && (
+        <div style={{
+          position: 'absolute', left: 20, top: 52, bottom: -32,
+          width: 1, background: 'linear-gradient(to bottom, rgba(181,139,99,0.4), rgba(181,139,99,0.05))',
+        }} />
+      )}
+      {/* Number bubble */}
+      <div style={{
+        width: 44, height: 44, borderRadius: 8, flexShrink: 0,
+        border: '1px solid rgba(181,139,99,0.4)',
+        background: 'rgba(181,139,99,0.08)',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+      }}>
+        <span style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 14, fontWeight: 700, color: '#B58B63' }}>
+          {step.num}
+        </span>
+      </div>
+      {/* Text */}
+      <div style={{ paddingBottom: 32 }}>
+        <div style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 18, fontWeight: 600, color: '#C9C0B9', marginBottom: 6 }}>
+          {step.label}
+        </div>
+        <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 15, color: '#A79E9C', lineHeight: 1.6, maxWidth: 380 }}>
+          {step.desc}
+        </div>
+      </div>
+    </motion.div>
+  )
+}
+
+// ─── Main Landing Page ───────────────────────────────────────────────────────
+export function LandingPage() {
+  const heroRef = useRef(null)
+
+  return (
+    <div style={{ minHeight: '100vh', background: '#1A1A1A', overflowX: 'hidden', position: 'relative' }}>
+      {/* Mesh grid background */}
+      <div style={{
+        position: 'fixed', inset: 0, pointerEvents: 'none', zIndex: 0,
+        backgroundImage: 'linear-gradient(to right, rgba(255,255,255,0.03) 1px, transparent 1px), linear-gradient(to bottom, rgba(255,255,255,0.03) 1px, transparent 1px)',
+        backgroundSize: '40px 40px',
+      }} />
+
+      {/* ── Navigation ─────────────────────────────────────────────────── */}
+      <nav style={{
+        position: 'fixed', top: 0, left: 0, right: 0, zIndex: 50,
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        padding: '0 64px', height: 80,
+        background: 'rgba(26,26,26,0.85)', backdropFilter: 'blur(20px)',
+        borderBottom: '1px solid rgba(255,255,255,0.07)',
+      }}>
+        <a href="#" style={{ display: 'flex', alignItems: 'center', gap: 10, textDecoration: 'none' }}>
+          <div style={{ width: 32, height: 32, borderRadius: 8, background: 'rgba(181,139,99,0.2)', border: '1px solid rgba(181,139,99,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <Shield size={16} style={{ color: '#B58B63' }} />
+          </div>
+          <span style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 20, fontWeight: 700, color: '#C9C0B9', letterSpacing: '-0.02em' }}>
+            MIS<span style={{ color: '#B58B63' }}>·</span>INFO
+          </span>
+        </a>
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: 40 }}>
+          {['Features', 'How it Works', 'Trust Score'].map((link) => (
+            <a key={link} href={`#${link.toLowerCase().replace(/\s/g, '-')}`} style={{
+              fontFamily: "'Inter', sans-serif", fontSize: 14, color: '#A79E9C',
+              textDecoration: 'none', transition: 'color 0.2s',
+            }}
+            onMouseEnter={e => (e.currentTarget.style.color = '#C9C0B9')}
+            onMouseLeave={e => (e.currentTarget.style.color = '#A79E9C')}
+            >
+              {link}
+            </a>
+          ))}
+        </div>
+
+        <Link to="/dashboard" style={{ textDecoration: 'none' }}>
+          <motion.button
+            whileHover={{ backgroundColor: '#c9a07b', scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            style={{
+              fontFamily: "'Space Grotesk', sans-serif", fontSize: 14, fontWeight: 600,
+              color: '#1A1A1A', background: '#B58B63', border: 'none',
+              padding: '10px 24px', borderRadius: 4, cursor: 'pointer',
+              boxShadow: 'inset 0 1px rgba(255,255,255,0.2)',
+            }}
+          >
+            Try Now
+          </motion.button>
         </Link>
       </nav>
 
-      <section className="relative flex flex-col items-center justify-center min-h-screen pt-20 px-6 overflow-hidden">
-        <div className="absolute inset-0 overflow-hidden">
-          <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl" />
-          <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-cyan-500/10 rounded-full blur-3xl" />
-        </div>
-        <div className="absolute inset-0 opacity-[0.03]" style={{ backgroundImage: 'linear-gradient(rgba(37,99,235,0.5) 1px, transparent 1px), linear-gradient(90deg, rgba(37,99,235,0.5) 1px, transparent 1px)', backgroundSize: '60px 60px' }} />
+      {/* ── Hero Section ───────────────────────────────────────────────── */}
+      <section
+        ref={heroRef}
+        id="hero"
+        style={{
+          position: 'relative', zIndex: 10,
+          minHeight: '100vh', display: 'flex', alignItems: 'center',
+          padding: '140px 64px 100px',
+          maxWidth: 1440, margin: '0 auto',
+        }}
+      >
+        {/* Teal radial glow */}
+        <div style={{
+          position: 'absolute', top: '30%', left: '-5%',
+          width: 700, height: 700, borderRadius: '50%',
+          background: 'radial-gradient(circle, rgba(61,77,85,0.2) 0%, transparent 65%)',
+          pointerEvents: 'none',
+        }} />
 
-        <div className="relative z-10 max-w-4xl mx-auto text-center">
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
-            <Badge variant="info" className="mb-6 text-sm px-4 py-1.5"><Zap size={12} /> Powered by Advanced AI Reasoning</Badge>
-          </motion.div>
-          <motion.h1 initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="text-5xl md:text-7xl font-bold text-foreground leading-tight mb-6">
-            Verify Before<br /><span className="gradient-text">You Believe.</span>
-          </motion.h1>
-          <motion.p initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto mb-10 leading-relaxed">
-            AI-powered misinformation verification platform. Paste any claim, article, or news headline and get a comprehensive credibility report in seconds.
-          </motion.p>
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }} className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link to="/dashboard"><Button size="lg" variant="gradient" className="w-full sm:w-auto">Try Demo Free <ArrowRight size={18} /></Button></Link>
-            <a href="#how-it-works"><Button size="lg" variant="outline" className="w-full sm:w-auto">Learn More <ChevronDown size={18} /></Button></a>
-          </motion.div>
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }} className="grid grid-cols-2 md:grid-cols-4 gap-6 mt-20">
-            {stats.map((stat, i) => (
-              <div key={i} className="text-center">
-                <div className="text-2xl md:text-3xl font-bold gradient-text">{stat.value}</div>
-                <div className="text-sm text-muted-foreground mt-1">{stat.label}</div>
-              </div>
-            ))}
-          </motion.div>
-        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 80, alignItems: 'center', width: '100%' }}>
+          {/* Left — Hero copy */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 32 }}>
+            {/* Badge */}
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5 }}
+            >
+              <span style={{
+                display: 'inline-flex', alignItems: 'center', gap: 8,
+                fontFamily: "'JetBrains Mono', monospace", fontSize: 11, letterSpacing: '0.12em',
+                color: '#B58B63', background: 'rgba(181,139,99,0.1)',
+                border: '1px solid rgba(181,139,99,0.3)',
+                padding: '6px 14px', borderRadius: 4, textTransform: 'uppercase',
+              }}>
+                <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#B58B63', display: 'inline-block' }} />
+                AI-Powered Verification Engine
+              </span>
+            </motion.div>
 
-        <motion.div initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.4 }} className="relative w-full max-w-2xl mt-16 animate-float">
-          <div className="glass rounded-2xl p-6 border border-border shadow-2xl">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="flex gap-1.5">
-                <div className="w-3 h-3 rounded-full bg-red-500" />
-                <div className="w-3 h-3 rounded-full bg-yellow-500" />
-                <div className="w-3 h-3 rounded-full bg-green-500" />
-              </div>
-              <div className="flex-1 h-7 rounded-md bg-secondary flex items-center px-3">
-                <span className="text-xs text-muted-foreground">app.trustlens.ai/dashboard</span>
-              </div>
-            </div>
-            <div className="space-y-3">
-              {examples.map((ex, i) => (
-                <motion.div key={i} initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.8 + i * 0.2 }} className="flex items-center justify-between p-3 rounded-lg bg-background/50 border border-border">
-                  <span className="text-sm text-foreground flex-1 truncate pr-4">{ex.claim}</span>
-                  <div className="flex items-center gap-3 flex-shrink-0">
-                    <span className={`text-lg font-bold ${ex.color === 'green' ? 'text-green-500' : ex.color === 'yellow' ? 'text-yellow-500' : 'text-red-500'}`}>{ex.score}</span>
-                    <Badge variant={ex.color === 'green' ? 'success' : ex.color === 'yellow' ? 'warning' : 'danger'}>{ex.status}</Badge>
-                  </div>
+            {/* Headline */}
+            <div>
+              {['Detect.', 'Verify.', 'Trust.'].map((word, i) => (
+                <motion.div
+                  key={word}
+                  initial={{ opacity: 0, x: -30 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.15 + i * 0.12, duration: 0.6, ease: [0.25, 0.46, 0.45, 0.94] }}
+                  style={{
+                    fontFamily: "'Space Grotesk', sans-serif",
+                    fontSize: 'clamp(56px, 7vw, 96px)',
+                    fontWeight: 700,
+                    lineHeight: 1.05,
+                    letterSpacing: '-0.04em',
+                    color: i === 0 ? '#FFFFFF' : i === 1 ? '#B58B63' : '#A79E9C',
+                  }}
+                >
+                  {word}
                 </motion.div>
               ))}
+            </div>
+
+            {/* Subtext */}
+            <motion.p
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.55, duration: 0.6 }}
+              style={{
+                fontFamily: "'Inter', sans-serif", fontSize: 18, lineHeight: 1.7,
+                color: '#A79E9C', maxWidth: 500,
+              }}
+            >
+              AI-powered scanning to dismantle misinformation in real-time. Built for researchers,
+              journalists, and high-stakes decision-makers who demand absolute clarity.
+            </motion.p>
+
+            {/* CTAs */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.7, duration: 0.5 }}
+              style={{ display: 'flex', gap: 16, alignItems: 'center' }}
+            >
+              <Link to="/dashboard" style={{ textDecoration: 'none' }}>
+                <motion.button
+                  whileHover={{ backgroundColor: '#c9a07b', scale: 1.03 }}
+                  whileTap={{ scale: 0.97 }}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: 10,
+                    fontFamily: "'Space Grotesk', sans-serif", fontSize: 15, fontWeight: 600,
+                    color: '#1A1A1A', background: '#B58B63',
+                    border: 'none', padding: '14px 28px', borderRadius: 4, cursor: 'pointer',
+                    boxShadow: '0 0 0 0 rgba(181,139,99,0.4)',
+                    transition: 'all 0.25s',
+                  }}
+                >
+                  Start Scanning
+                  <ArrowRight size={18} />
+                </motion.button>
+              </Link>
+
+              <a href="#how-it-works" style={{ textDecoration: 'none' }}>
+                <motion.button
+                  whileHover={{ backgroundColor: 'rgba(255,255,255,0.06)' }}
+                  whileTap={{ scale: 0.97 }}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: 10,
+                    fontFamily: "'Space Grotesk', sans-serif", fontSize: 15, fontWeight: 500,
+                    color: '#C9C0B9', background: 'transparent',
+                    border: '1px solid rgba(201,192,185,0.4)',
+                    padding: '14px 28px', borderRadius: 4, cursor: 'pointer',
+                    transition: 'background 0.2s',
+                  }}
+                >
+                  See How It Works
+                  <ChevronDown size={18} />
+                </motion.button>
+              </a>
+            </motion.div>
+
+            {/* Trust stats */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.85, duration: 0.5 }}
+              style={{
+                display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)',
+                gap: 24, paddingTop: 32, marginTop: 8,
+                borderTop: '1px solid rgba(255,255,255,0.08)',
+              }}
+            >
+              {[
+                { value: '10M+', label: 'Claims Verified' },
+                { value: '98.3%', label: 'Accuracy', highlight: true },
+                { value: '⬤ Live', label: 'Real-Time', dot: true },
+              ].map((stat, i) => (
+                <div key={i}>
+                  <div style={{
+                    fontFamily: "'Space Grotesk', sans-serif", fontSize: 26, fontWeight: 700,
+                    color: stat.highlight ? '#B58B63' : '#FFFFFF',
+                    display: 'flex', alignItems: 'center', gap: 8,
+                  }}>
+                    {stat.dot ? (
+                      <>
+                        <motion.span
+                          animate={{ opacity: [1, 0.3, 1] }}
+                          transition={{ duration: 2, repeat: Infinity }}
+                          style={{ width: 10, height: 10, borderRadius: '50%', background: '#B58B63', display: 'inline-block' }}
+                        />
+                        <span>Live</span>
+                      </>
+                    ) : stat.value}
+                  </div>
+                  <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 11, color: '#A79E9C', textTransform: 'uppercase', letterSpacing: '0.08em', marginTop: 4 }}>
+                    {stat.label}
+                  </div>
+                </div>
+              ))}
+            </motion.div>
+          </div>
+
+          {/* Right — Analysis Card */}
+          <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', position: 'relative' }}>
+            <AnalysisCard />
+          </div>
+        </div>
+      </section>
+
+      {/* ── Features Section ───────────────────────────────────────────── */}
+      <section
+        id="features"
+        style={{
+          position: 'relative', zIndex: 10,
+          padding: '120px 64px',
+          maxWidth: 1440, margin: '0 auto',
+        }}
+      >
+        <div style={{ textAlign: 'center', marginBottom: 72 }}>
+          <span style={{
+            display: 'inline-block',
+            fontFamily: "'JetBrains Mono', monospace", fontSize: 11, letterSpacing: '0.12em',
+            color: '#B58B63', textTransform: 'uppercase',
+            background: 'rgba(181,139,99,0.1)', border: '1px solid rgba(181,139,99,0.25)',
+            padding: '6px 14px', borderRadius: 4, marginBottom: 20,
+          }}>
+            Capabilities
+          </span>
+          <h2 style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 48, fontWeight: 700, color: '#C9C0B9', letterSpacing: '-0.02em', margin: '0 0 16px' }}>
+            Built for Truth-Seekers
+          </h2>
+          <p style={{ fontFamily: "'Inter', sans-serif", fontSize: 18, color: '#A79E9C', maxWidth: 540, margin: '0 auto', lineHeight: 1.7 }}>
+            Every feature is engineered for clarity, speed, and explainability — because trust requires evidence.
+          </p>
+        </div>
+
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 20 }}>
+          {features.map((f, i) => <FeatureCard key={i} feature={f} index={i} />)}
+        </div>
+      </section>
+
+      {/* ── How It Works Section ──────────────────────────────────────── */}
+      <section
+        id="how-it-works"
+        style={{
+          position: 'relative', zIndex: 10,
+          padding: '120px 64px',
+          background: 'rgba(61,77,85,0.08)',
+          borderTop: '1px solid rgba(255,255,255,0.05)',
+          borderBottom: '1px solid rgba(255,255,255,0.05)',
+        }}
+      >
+        <div style={{ maxWidth: 1200, margin: '0 auto', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 100, alignItems: 'start' }}>
+          {/* Left — section header */}
+          <div style={{ position: 'sticky', top: 120 }}>
+            <span style={{
+              display: 'inline-block',
+              fontFamily: "'JetBrains Mono', monospace", fontSize: 11, letterSpacing: '0.12em',
+              color: '#B58B63', textTransform: 'uppercase',
+              background: 'rgba(181,139,99,0.1)', border: '1px solid rgba(181,139,99,0.25)',
+              padding: '6px 14px', borderRadius: 4, marginBottom: 24,
+            }}>
+              The Process
+            </span>
+            <h2 style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 48, fontWeight: 700, color: '#C9C0B9', letterSpacing: '-0.02em', lineHeight: 1.15, marginBottom: 20 }}>
+              From Claim to<br />Verdict in<br /><span style={{ color: '#B58B63' }}>5 Stages</span>
+            </h2>
+            <p style={{ fontFamily: "'Inter', sans-serif", fontSize: 17, color: '#A79E9C', lineHeight: 1.7, marginBottom: 40 }}>
+              A rigorous, transparent pipeline ensures every verification is traceable, auditable, and explainable.
+            </p>
+            <Link to="/dashboard" style={{ textDecoration: 'none' }}>
+              <motion.button
+                whileHover={{ backgroundColor: '#c9a07b' }}
+                whileTap={{ scale: 0.97 }}
+                style={{
+                  display: 'inline-flex', alignItems: 'center', gap: 10,
+                  fontFamily: "'Space Grotesk', sans-serif", fontSize: 14, fontWeight: 600,
+                  color: '#1A1A1A', background: '#B58B63',
+                  border: 'none', padding: '12px 24px', borderRadius: 4, cursor: 'pointer',
+                }}
+              >
+                Try the Demo <ArrowRight size={16} />
+              </motion.button>
+            </Link>
+          </div>
+
+          {/* Right — Steps */}
+          <div style={{ paddingTop: 8 }}>
+            {steps.map((step, i) => (
+              <Step key={i} step={step} index={i} isLast={i === steps.length - 1} />
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── Trust Score CTA Section ─────────────────────────────────────── */}
+      <section
+        id="trust-score"
+        style={{
+          position: 'relative', zIndex: 10,
+          padding: '120px 64px',
+          maxWidth: 1440, margin: '0 auto',
+        }}
+      >
+        <motion.div
+          initial={{ opacity: 0, y: 40 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.7 }}
+          viewport={{ once: true }}
+          style={{
+            background: 'rgba(61,77,85,0.18)',
+            border: '1px solid rgba(181,139,99,0.2)',
+            borderRadius: 16, padding: 80,
+            textAlign: 'center', position: 'relative', overflow: 'hidden',
+          }}
+        >
+          {/* Background copper glow */}
+          <div style={{
+            position: 'absolute', inset: 0,
+            background: 'radial-gradient(circle at 50% 100%, rgba(181,139,99,0.12) 0%, transparent 60%)',
+            pointerEvents: 'none',
+          }} />
+
+          <div style={{ position: 'relative', zIndex: 1 }}>
+            <Star size={36} style={{ color: '#B58B63', marginBottom: 24 }} />
+            <h2 style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 48, fontWeight: 700, color: '#C9C0B9', letterSpacing: '-0.02em', marginBottom: 16, lineHeight: 1.2 }}>
+              Start Verifying Today
+            </h2>
+            <p style={{ fontFamily: "'Inter', sans-serif", fontSize: 18, color: '#A79E9C', maxWidth: 480, margin: '0 auto 48px', lineHeight: 1.7 }}>
+              Join thousands of journalists, researchers, and fact-checkers who rely on Mis·Info for the truth.
+            </p>
+            <div style={{ display: 'flex', gap: 16, justifyContent: 'center' }}>
+              <Link to="/dashboard" style={{ textDecoration: 'none' }}>
+                <motion.button
+                  whileHover={{ backgroundColor: '#c9a07b', scale: 1.03 }}
+                  whileTap={{ scale: 0.97 }}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: 10,
+                    fontFamily: "'Space Grotesk', sans-serif", fontSize: 16, fontWeight: 600,
+                    color: '#1A1A1A', background: '#B58B63',
+                    border: 'none', padding: '16px 36px', borderRadius: 4, cursor: 'pointer',
+                  }}
+                >
+                  Try Demo Free <ArrowRight size={18} />
+                </motion.button>
+              </Link>
+              <Link to="/about" style={{ textDecoration: 'none' }}>
+                <motion.button
+                  whileHover={{ backgroundColor: 'rgba(255,255,255,0.06)' }}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: 10,
+                    fontFamily: "'Space Grotesk', sans-serif", fontSize: 16, fontWeight: 500,
+                    color: '#C9C0B9', background: 'transparent',
+                    border: '1px solid rgba(201,192,185,0.35)',
+                    padding: '16px 36px', borderRadius: 4, cursor: 'pointer',
+                    transition: 'background 0.2s',
+                  }}
+                >
+                  Learn More
+                </motion.button>
+              </Link>
             </div>
           </div>
         </motion.div>
       </section>
 
-      <section id="how-it-works" className="py-24 px-6 border-t border-border">
-        <div className="max-w-4xl mx-auto">
-          <div className="text-center mb-16">
-            <Badge variant="info" className="mb-4">The Process</Badge>
-            <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">How TrustLens Works</h2>
-            <p className="text-muted-foreground max-w-xl mx-auto">A 5-step AI pipeline that gives you verifiable, explainable results</p>
+      {/* ── Footer ──────────────────────────────────────────────────────── */}
+      <footer style={{
+        position: 'relative', zIndex: 10,
+        borderTop: '1px solid rgba(255,255,255,0.07)',
+        padding: '32px 64px',
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <div style={{ width: 24, height: 24, borderRadius: 6, background: 'rgba(181,139,99,0.15)', border: '1px solid rgba(181,139,99,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <Shield size={12} style={{ color: '#B58B63' }} />
           </div>
-          <div className="grid md:grid-cols-5 gap-4">
-            {[{step:'01',label:'Submit',desc:'Paste text, URL, or upload'},{step:'02',label:'Extract',desc:'AI extracts core claims'},{step:'03',label:'Search',desc:'Cross-references sources'},{step:'04',label:'Score',desc:'Generates Trust Score'},{step:'05',label:'Report',desc:'Full explanation delivered'}].map((item, i) => (
-              <motion.div key={i} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.1 }} viewport={{ once: true }} className="flex flex-col items-center text-center">
-                <div className="w-12 h-12 rounded-xl gradient-bg flex items-center justify-center mb-3 text-white font-bold text-sm">{item.step}</div>
-                <div className="font-semibold text-foreground text-sm">{item.label}</div>
-                <div className="text-xs text-muted-foreground mt-1">{item.desc}</div>
-              </motion.div>
-            ))}
-          </div>
+          <span style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 14, fontWeight: 600, color: '#A79E9C' }}>
+            MIS<span style={{ color: '#B58B63' }}>·</span>INFO
+          </span>
+          <span style={{ fontFamily: "'Inter', sans-serif", fontSize: 13, color: '#A79E9C', opacity: 0.6 }}>© 2025</span>
         </div>
-      </section>
-
-      <section id="features" className="py-24 px-6 bg-secondary/30">
-        <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-16">
-            <Badge variant="info" className="mb-4">Capabilities</Badge>
-            <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">Built for the Truth-Seekers</h2>
-          </div>
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {features.map((feature, i) => (
-              <motion.div key={i} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.1 }} viewport={{ once: true }} className="glass rounded-xl p-6 border border-border hover:border-primary/50 transition-all duration-300 group">
-                <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center mb-4">
-                  <feature.icon size={20} className="text-primary" />
-                </div>
-                <h3 className="font-semibold text-foreground mb-2">{feature.title}</h3>
-                <p className="text-sm text-muted-foreground leading-relaxed">{feature.description}</p>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      <section className="py-24 px-6">
-        <div className="max-w-2xl mx-auto text-center">
-          <div className="relative">
-            <div className="relative glass rounded-2xl p-12 border border-border">
-              <Star className="mx-auto mb-4 text-yellow-500" size={32} />
-              <h2 className="text-3xl font-bold text-foreground mb-4">Start Verifying Today</h2>
-              <p className="text-muted-foreground mb-8">Join thousands of journalists, researchers, and fact-checkers who trust TrustLens AI.</p>
-              <Link to="/dashboard"><Button size="lg" variant="gradient">Try the Free Demo <ArrowRight size={18} /></Button></Link>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <footer className="border-t border-border py-8 px-6">
-        <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
-          <div className="flex items-center gap-2">
-            <div className="w-6 h-6 rounded gradient-bg flex items-center justify-center"><Shield size={12} className="text-white" /></div>
-            <span className="text-sm font-medium text-foreground">TrustLens AI</span>
-            <span className="text-xs text-muted-foreground">&copy; 2024</span>
-          </div>
-          <div className="flex gap-6">
-            <Link to="/about" className="text-xs text-muted-foreground hover:text-foreground">About</Link>
-            <Link to="/settings" className="text-xs text-muted-foreground hover:text-foreground">Settings</Link>
-          </div>
+        <div style={{ display: 'flex', gap: 32 }}>
+          {[
+            { label: 'Dashboard', to: '/dashboard' },
+            { label: 'Analytics', to: '/analytics' },
+            { label: 'About', to: '/about' },
+            { label: 'Settings', to: '/settings' },
+          ].map(({ label, to }) => (
+            <Link key={to} to={to} style={{
+              fontFamily: "'Inter', sans-serif", fontSize: 13,
+              color: '#A79E9C', textDecoration: 'none', transition: 'color 0.2s',
+            }}
+            onMouseEnter={e => (e.currentTarget.style.color = '#C9C0B9')}
+            onMouseLeave={e => (e.currentTarget.style.color = '#A79E9C')}
+            >
+              {label}
+            </Link>
+          ))}
         </div>
       </footer>
     </div>

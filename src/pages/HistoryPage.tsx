@@ -1,12 +1,11 @@
 import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { Search, Bookmark, BookmarkCheck, Filter, Clock, ArrowRight } from 'lucide-react'
+import { Search, Bookmark, BookmarkCheck, Clock, ArrowRight, FolderKanban } from 'lucide-react'
 import { useVerification } from '../contexts/VerificationContext'
 import { Badge } from '../components/ui/Badge'
 import { Button } from '../components/ui/Button'
-import { Input } from '../components/ui/Input'
-import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/Card'
+import { Card, CardContent } from '../components/ui/Card'
 import { formatDate } from '../lib/utils'
 
 export function HistoryPage() {
@@ -14,113 +13,155 @@ export function HistoryPage() {
   const { reports, toggleBookmark } = useVerification()
   const [search, setSearch] = useState('')
   const [filter, setFilter] = useState<'all' | 'bookmarked'>('all')
+  const [categoryFilter, setCategoryFilter] = useState<string>('all')
+
+  // Get unique topics for category filter
+  const topics = ['all', ...Array.from(new Set(reports.map(r => r.topic)))]
 
   const filtered = reports.filter(r => {
     const matchesSearch = r.claim.toLowerCase().includes(search.toLowerCase()) || r.topic.toLowerCase().includes(search.toLowerCase())
     const matchesFilter = filter === 'all' || (filter === 'bookmarked' && r.bookmarked)
-    return matchesSearch && matchesFilter
+    const matchesCategory = categoryFilter === 'all' || r.topic === categoryFilter
+    return matchesSearch && matchesFilter && matchesCategory
   })
 
+  // Large mock counts mapped to show vault data
+  const totalCount = reports.length
+  const trueCount = reports.filter(r => r.trustScore >= 75).length
+  const uncertainCount = reports.filter(r => r.trustScore >= 40 && r.trustScore < 75).length
+  const falseCount = reports.filter(r => r.trustScore < 40).length
+
+  const stats = [
+    { label: 'Total Audits Indexed', value: totalCount, highlight: 'text-white' },
+    { label: 'Verified True Nodes', value: trueCount, highlight: 'text-[#B58B63]' },
+    { label: 'Uncertain Calibration', value: uncertainCount, highlight: 'text-yellow-400' },
+    { label: 'Exposed Misinformation', value: falseCount, highlight: 'text-red-400' },
+  ]
+
   return (
-    <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="max-w-4xl mx-auto space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-foreground">Verification History</h1>
-        <p className="text-muted-foreground text-sm mt-1">Browse, search, and bookmark your past verification reports.</p>
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="max-w-6xl mx-auto space-y-8 py-2">
+      
+      {/* Header section with Title and Search/Filters */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-white/5 pb-6">
+        <div>
+          <div className="flex items-center gap-2">
+            <FolderKanban size={14} className="text-[#B58B63]" />
+            <span className="text-[10px] font-mono tracking-widest text-[#B58B63] uppercase">DIGITAL CORROBORATION VAULT</span>
+          </div>
+          <h1 className="text-2xl font-display font-bold text-white tracking-tight mt-1">Audited Records Archive</h1>
+        </div>
+        
+        {/* Ingestion Search Console */}
+        <div className="flex flex-wrap gap-2 items-center">
+          <div className="relative">
+            <input
+              type="text"
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              placeholder="Search index keywords..."
+              className="h-10 pl-9 pr-4 rounded bg-black/40 border border-white/10 text-xs font-mono text-[#C9C0B9] focus:outline-none focus:border-[#B58B63] transition-all w-52"
+            />
+            <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#A79E9C]" />
+          </div>
+          
+          <select
+            value={categoryFilter}
+            onChange={e => setCategoryFilter(e.target.value)}
+            className="h-10 px-3 rounded bg-black/40 border border-white/10 text-xs font-mono text-[#A79E9C] focus:outline-none focus:border-[#B58B63]"
+          >
+            <option value="all">ALL CATEGORIES</option>
+            {topics.filter(t => t !== 'all').map(topic => (
+              <option key={topic} value={topic}>{topic.toUpperCase()}</option>
+            ))}
+          </select>
+
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setFilter(p => p === 'all' ? 'bookmarked' : 'all')}
+            className={`h-10 border-white/10 ${filter === 'bookmarked' ? 'bg-[#B58B63]/10 border-[#B58B63]/30 text-white' : 'text-[#A79E9C]'}`}
+          >
+            {filter === 'bookmarked' ? 'BOOKMARKS ACTIVE' : 'BOOKMARKS'}
+          </Button>
+        </div>
       </div>
 
-      {/* Stats row */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        {[
-          { label: 'Total', value: reports.length, color: 'text-foreground' },
-          { label: 'Verified', value: reports.filter(r => r.trustScore >= 75).length, color: 'text-green-500' },
-          { label: 'Uncertain', value: reports.filter(r => r.trustScore >= 40 && r.trustScore < 75).length, color: 'text-yellow-500' },
-          { label: 'False', value: reports.filter(r => r.trustScore < 40).length, color: 'text-red-500' },
-        ].map((stat, i) => (
-          <Card key={i}>
-            <CardContent className="p-4 text-center">
-              <div className={`text-2xl font-bold ${stat.color}`}>{stat.value}</div>
-              <div className="text-xs text-muted-foreground mt-1">{stat.label}</div>
+      {/* Stats Overview Grid */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        {stats.map((stat, i) => (
+          <Card key={i} className="border border-white/5 bg-[#1e272b]/30">
+            <CardContent className="p-5 text-center">
+              <div className={`text-2xl font-display font-bold ${stat.highlight}`}>{stat.value}</div>
+              <div className="text-[10px] font-mono text-[#A79E9C] uppercase tracking-wider mt-2">{stat.label}</div>
             </CardContent>
           </Card>
         ))}
       </div>
 
-      {/* Filters */}
-      <div className="flex flex-col sm:flex-row gap-3">
-        <div className="flex-1">
-          <Input
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-            placeholder="Search by claim or topic..."
-            leftIcon={<Search size={15} />}
-          />
-        </div>
-        <div className="flex gap-2">
-          <Button variant={filter === 'all' ? 'default' : 'outline'} size="sm" onClick={() => setFilter('all')}>All</Button>
-          <Button variant={filter === 'bookmarked' ? 'default' : 'outline'} size="sm" onClick={() => setFilter('bookmarked')} leftIcon={<Bookmark size={14} />}>Bookmarked</Button>
-        </div>
-      </div>
+      {/* Archive Grid (3 Columns) */}
+      <div>
+        {filtered.length === 0 ? (
+          <div className="text-center py-16 bg-[#1e272b]/20 border border-white/5 rounded-xl p-8 max-w-sm mx-auto">
+            <Clock size={36} className="mx-auto mb-4 text-[#A79E9C]" />
+            <p className="font-mono text-sm text-[#C9C0B9]">NO VAULT ENTRIES FOUND</p>
+            <p className="text-xs text-[#A79E9C] mt-1 font-mono uppercase">Adjust index queries or filters.</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {filtered.map((report, index) => {
+              const isHigh = report.trustScore >= 75
+              const isMid = report.trustScore >= 50 && report.trustScore < 75
+              const borderStyle = isHigh ? 'hover:border-green-500/30' : isMid ? 'hover:border-yellow-500/30' : 'hover:border-red-500/30'
+              const scoreColor = isHigh ? 'text-green-400' : isMid ? 'text-yellow-400' : 'text-red-400'
+              const scoreBorder = isHigh ? 'border-green-500/30 bg-green-500/5' : isMid ? 'border-yellow-500/30 bg-yellow-500/5' : 'border-red-500/30 bg-red-500/5'
 
-      {/* Timeline */}
-      <div className="relative">
-        <div className="absolute left-5 top-0 bottom-0 w-px bg-border" />
-        <div className="space-y-4">
-          {filtered.length === 0 ? (
-            <div className="text-center py-12 text-muted-foreground">
-              <Clock size={48} className="mx-auto mb-4 opacity-30" />
-              <p className="font-medium">No verifications found</p>
-              <p className="text-sm">Try adjusting your search or filters</p>
-            </div>
-          ) : (
-            filtered.map((report, index) => (
-              <motion.div
-                key={report.id}
-                initial={{ opacity: 0, x: -10 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: index * 0.05 }}
-                className="flex gap-4 pl-2"
-              >
-                <div className={`w-7 h-7 rounded-full flex-shrink-0 flex items-center justify-center text-white text-xs font-bold mt-2 relative z-10 ${
-                  report.trustScore >= 75 ? 'bg-green-500' : report.trustScore >= 50 ? 'bg-yellow-500' : 'bg-red-500'
-                }`}>
-                  {report.trustScore >= 75 ? '✓' : report.trustScore >= 50 ? '?' : '✗'}
-                </div>
-                <div
+              return (
+                <motion.div
+                  key={report.id}
+                  initial={{ opacity: 0, y: 15 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: index * 0.05, duration: 0.4 }}
+                  whileHover={{ y: -4, borderColor: 'rgba(181,139,99,0.3)' }}
                   onClick={() => navigate(`/report/${report.id}`)}
-                  className="flex-1 border border-border rounded-xl p-4 bg-card hover:border-primary/50 cursor-pointer transition-all group"
+                  className={`glass rounded-xl border border-white/5 p-5 bg-[#1e272b]/30 cursor-pointer flex flex-col justify-between h-[210px] transition-all duration-200 group ${borderStyle}`}
                 >
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-foreground leading-snug">{report.claim}</p>
-                      <div className="flex flex-wrap items-center gap-2 mt-2">
-                        <span className="text-xs text-muted-foreground flex items-center gap-1">
-                          <Clock size={10} /> {formatDate(report.createdAt)}
-                        </span>
-                        <Badge variant="outline" className="text-xs">{report.topic}</Badge>
-                        <Badge variant={report.trustScore >= 75 ? 'success' : report.trustScore >= 50 ? 'warning' : 'danger'}>
-                          {report.status}
-                        </Badge>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2 flex-shrink-0">
-                      <div className={`text-2xl font-bold ${
-                        report.trustScore >= 75 ? 'text-green-500' : report.trustScore >= 50 ? 'text-yellow-500' : 'text-red-500'
-                      }`}>{report.trustScore}</div>
+                  <div className="space-y-3">
+                    <div className="flex justify-between items-start gap-2">
+                      <span className="text-[10px] font-mono text-[#A79E9C] uppercase tracking-wider">{report.topic}</span>
                       <button
                         onClick={e => { e.stopPropagation(); toggleBookmark(report.id) }}
-                        className="text-muted-foreground hover:text-primary transition-colors"
+                        className="text-[#A79E9C] hover:text-[#B58B63] transition-colors"
                       >
-                        {report.bookmarked ? <BookmarkCheck size={16} className="text-primary" /> : <Bookmark size={16} />}
+                        {report.bookmarked ? (
+                          <BookmarkCheck size={16} className="text-[#B58B63]" />
+                        ) : (
+                          <Bookmark size={16} />
+                        )}
                       </button>
-                      <ArrowRight size={14} className="text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+                    </div>
+
+                    <p className="text-xs font-semibold font-mono text-white leading-relaxed line-clamp-3 group-hover:text-[#B58B63] transition-colors">
+                      &ldquo;{report.claim}&rdquo;
+                    </p>
+                  </div>
+
+                  <div className="flex items-center justify-between pt-4 border-t border-white/5 mt-auto">
+                    <span className="text-[10px] font-mono text-[#A79E9C]">
+                      {new Date(report.createdAt).toLocaleDateString()}
+                    </span>
+                    
+                    <div className={`flex items-center gap-1.5 px-3 py-1 rounded border font-mono text-xs font-bold ${scoreBorder} ${scoreColor}`}>
+                      <span>INDEX:</span>
+                      <span>{report.trustScore}%</span>
                     </div>
                   </div>
-                </div>
-              </motion.div>
-            ))
-          )}
-        </div>
+                </motion.div>
+              )
+            })}
+          </div>
+        )}
       </div>
+
     </motion.div>
   )
 }

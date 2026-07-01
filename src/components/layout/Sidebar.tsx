@@ -27,12 +27,12 @@ export function Sidebar({ open, onToggle }: SidebarProps) {
     <motion.aside
       animate={{ width: open ? 240 : 64 }}
       transition={{ duration: 0.3, ease: 'easeInOut' }}
-      className="relative flex flex-col h-full border-r border-border bg-card flex-shrink-0 overflow-hidden z-20"
+      className="relative flex flex-col h-full border-r border-white/10 bg-[#1e272b] flex-shrink-0 overflow-hidden z-20"
     >
       {/* Logo */}
-      <div className="flex items-center gap-3 p-4 border-b border-border h-16">
-        <div className="flex-shrink-0 w-8 h-8 rounded-lg gradient-bg flex items-center justify-center">
-          <Shield size={16} className="text-white" />
+      <div className="flex items-center gap-3 p-4 border-b border-white/10 h-16 bg-[#1a2225]">
+        <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-[#B58B63]/20 border border-[#B58B63]/40 flex items-center justify-center">
+          <Shield size={16} className="text-[#B58B63]" />
         </div>
         <AnimatePresence>
           {open && (
@@ -43,15 +43,17 @@ export function Sidebar({ open, onToggle }: SidebarProps) {
               transition={{ duration: 0.2 }}
               className="flex flex-col min-w-0"
             >
-              <span className="font-bold text-sm text-foreground leading-none">TrustLens</span>
-              <span className="text-xs text-muted-foreground">AI Verify</span>
+              <span className="font-bold text-sm text-[#C9C0B9] leading-none uppercase tracking-wide">
+                MIS<span className="text-[#B58B63]">·</span>INFO
+              </span>
+              <span className="text-[10px] text-[#A79E9C] font-mono tracking-widest mt-1">VERIFICATION</span>
             </motion.div>
           )}
         </AnimatePresence>
       </div>
 
       {/* Nav Items */}
-      <nav className="flex-1 p-2 space-y-1">
+      <nav className="flex-1 p-2 space-y-1 mt-4">
         {navItems.map(({ to, icon: Icon, label }) => {
           const active = location.pathname === to || location.pathname.startsWith(to + '/')
           return (
@@ -61,18 +63,18 @@ export function Sidebar({ open, onToggle }: SidebarProps) {
               className={cn(
                 'flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200 group relative',
                 active
-                  ? 'bg-primary/10 text-primary'
-                  : 'text-muted-foreground hover:bg-accent hover:text-foreground'
+                  ? 'text-white'
+                  : 'text-[#A79E9C] hover:bg-white/5 hover:text-[#C9C0B9]'
               )}
             >
               {active && (
                 <motion.div
                   layoutId="sidebar-indicator"
-                  className="absolute inset-0 rounded-lg bg-primary/10"
+                  className="absolute inset-0 rounded-lg bg-[#B58B63]/10 border border-[#B58B63]/30 shadow-[0_0_12px_rgba(181,139,99,0.15)]"
                   transition={{ duration: 0.2 }}
                 />
               )}
-              <Icon size={18} className="flex-shrink-0 relative z-10" />
+              <Icon size={18} className={cn('flex-shrink-0 relative z-10', active ? 'text-[#B58B63]' : 'text-[#A79E9C]')} />
               <AnimatePresence>
                 {open && (
                   <motion.span
@@ -86,7 +88,7 @@ export function Sidebar({ open, onToggle }: SidebarProps) {
                 )}
               </AnimatePresence>
               {!open && (
-                <div className="absolute left-full ml-2 px-2 py-1 bg-popover text-popover-foreground text-xs rounded-md shadow-md border border-border opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50">
+                <div className="absolute left-full ml-2 px-2 py-1 bg-[#253035] text-[#C9C0B9] text-xs rounded-md shadow-md border border-white/10 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50">
                   {label}
                 </div>
               )}
@@ -102,11 +104,11 @@ export function Sidebar({ open, onToggle }: SidebarProps) {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="px-4 py-3 border-t border-border"
+            className="px-4 py-3 border-t border-white/10 bg-[#1a2225]"
           >
             <div className="flex items-center gap-2">
-              <Zap size={12} className="text-cyan-500" />
-              <span className="text-xs text-muted-foreground">TrustLens v1.0 Beta</span>
+              <Zap size={12} className="text-[#B58B63] animate-pulse" />
+              <span className="text-[10px] font-mono text-[#A79E9C] uppercase tracking-wider">Mis·Info v1.0</span>
             </div>
           </motion.div>
         )}
@@ -115,7 +117,7 @@ export function Sidebar({ open, onToggle }: SidebarProps) {
       {/* Toggle button */}
       <button
         onClick={onToggle}
-        className="absolute -right-3 top-20 w-6 h-6 rounded-full bg-background border border-border shadow-md flex items-center justify-center hover:bg-accent transition-colors z-30"
+        className="absolute -right-3 top-20 w-6 h-6 rounded-full bg-[#1A1A1A] border border-white/10 shadow-md flex items-center justify-center hover:bg-[#3D4D55] text-[#A79E9C] hover:text-[#C9C0B9] transition-colors z-30"
       >
         {open ? <ChevronLeft size={12} /> : <ChevronRight size={12} />}
       </button>

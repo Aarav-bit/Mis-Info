@@ -4,7 +4,7 @@ import { motion } from 'framer-motion'
 import {
   ArrowLeft, Bookmark, BookmarkCheck, Share2, Download,
   ChevronDown, ExternalLink, CheckCircle, XCircle, AlertCircle,
-  Minus
+  Minus, Sparkles, Shield, Globe
 } from 'lucide-react'
 import { useVerification } from '../contexts/VerificationContext'
 import { TrustScoreRing } from '../components/features/TrustScoreRing'
@@ -21,7 +21,7 @@ function ReliabilityDot({ score }: { score: number }) {
   return (
     <div className="flex items-center gap-1.5">
       <div className={`w-2 h-2 rounded-full ${color}`} />
-      <span className="text-sm text-foreground">{score}%</span>
+      <span className="text-xs font-mono text-[#C9C0B9]">{score}%</span>
     </div>
   )
 }
@@ -30,153 +30,230 @@ export function ReportPage() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const { getReport, toggleBookmark } = useVerification()
-  const [openAccordion, setOpenAccordion] = useState<string | null>('claim')
+  const [openAccordion, setOpenAccordion] = useState<string | null>('decomp')
 
   const report = id ? (getReport(id) ?? MOCK_REPORTS.find(r => r.id === id)) : undefined
 
   if (!report) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[400px] gap-4">
-        <AlertCircle size={48} className="text-muted-foreground" />
-        <p className="text-muted-foreground">Report not found</p>
-        <Button onClick={() => navigate('/dashboard')}>Back to Dashboard</Button>
+      <div className="flex flex-col items-center justify-center min-h-[400px] gap-4 bg-[#1e272b]/25 border border-white/5 rounded-xl p-8 max-w-md mx-auto mt-12">
+        <AlertCircle size={48} className="text-[#A79E9C]" />
+        <p className="text-[#C9C0B9] font-mono text-sm">Report not found</p>
+        <Button onClick={() => navigate('/dashboard')} className="mt-2 font-mono text-xs uppercase tracking-wider">Back to Workspace</Button>
       </div>
     )
   }
 
   const statusVariant = report.trustScore >= 75 ? 'success' : report.trustScore >= 50 ? 'warning' : 'danger'
+  const scoreTextColor = report.trustScore >= 75 ? 'text-green-400' : report.trustScore >= 50 ? 'text-yellow-400' : 'text-red-400'
   const supportingSources = report.sources.filter(s => s.supportsClaim)
   const contradictingSources = report.sources.filter(s => !s.supportsClaim)
 
   const accordionItems = [
-    { id: 'claim', title: 'Claim Extracted', content: report.claimExtracted },
-    { id: 'evidence', title: 'Evidence Found', content: report.evidenceSummary },
-    { id: 'why', title: 'Why this score?', content: `Trust score of ${report.trustScore}/100 based on ${report.sources.length} sources analyzed, with ${supportingSources.length} supporting and ${contradictingSources.length} contradicting the claim.` },
-    { id: 'confidence', title: 'Confidence Level', content: `Overall confidence: ${report.confidence}%. The AI analysis is ${report.confidence >= 85 ? 'highly' : report.confidence >= 70 ? 'moderately' : 'somewhat'} confident in this assessment.` },
-    { id: 'reasoning', title: 'Full Reasoning', content: report.reasoning },
+    { id: 'decomp', title: 'Claim Decomposition', content: report.claimExtracted },
+    { id: 'evidence', title: 'Evidence Corroboration', content: report.evidenceSummary },
+    { id: 'why', title: 'Consensus Calibration', content: `Consensus index of ${report.trustScore}% established via ${report.sources.length} nodes: ${supportingSources.length} supporting and ${contradictingSources.length} contradicting the target assertion.` },
+    { id: 'confidence', title: 'AI Reasoning Path', content: report.reasoning },
   ]
 
   return (
-    <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="max-w-4xl mx-auto space-y-6">
-      <div className="flex items-center justify-between">
-        <Button variant="ghost" size="sm" onClick={() => navigate(-1)} leftIcon={<ArrowLeft size={16} />}>Back</Button>
+    <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="max-w-5xl mx-auto space-y-6 py-6">
+      
+      {/* Report Toolbars */}
+      <div className="flex items-center justify-between border-b border-white/5 pb-4">
+        <div className="flex items-center gap-2">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => navigate(-1)}
+            leftIcon={<ArrowLeft size={16} />}
+            className="text-[#A79E9C] hover:text-white font-mono text-xs uppercase tracking-wider"
+          >
+            Return
+          </Button>
+        </div>
         <div className="flex gap-2">
-          <Button variant="outline" size="sm" onClick={() => toggleBookmark(report.id)}
-            leftIcon={report.bookmarked ? <BookmarkCheck size={14} className="text-primary" /> : <Bookmark size={14} />}>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => toggleBookmark(report.id)}
+            leftIcon={report.bookmarked ? <BookmarkCheck size={14} className="text-[#B58B63]" /> : <Bookmark size={14} />}
+            className="border-white/10 hover:bg-white/5 text-[#A79E9C] hover:text-[#C9C0B9] font-mono text-xs uppercase tracking-wider"
+          >
             {report.bookmarked ? 'Bookmarked' : 'Bookmark'}
           </Button>
-          <Button variant="outline" size="sm" leftIcon={<Share2 size={14} />}>Share</Button>
-          <Button variant="outline" size="sm" leftIcon={<Download size={14} />}>Export</Button>
+          <Button variant="outline" size="sm" leftIcon={<Share2 size={14} />} className="border-white/10 hover:bg-white/5 text-[#A79E9C] hover:text-[#C9C0B9] font-mono text-xs uppercase tracking-wider">Share</Button>
+          <Button variant="outline" size="sm" leftIcon={<Download size={14} />} className="border-white/10 hover:bg-white/5 text-[#A79E9C] hover:text-[#C9C0B9] font-mono text-xs uppercase tracking-wider">Export</Button>
         </div>
       </div>
 
-      {/* Trust Score Hero */}
-      <Card className="border-border overflow-hidden">
-        <div className="relative">
-          <div className="absolute inset-0 gradient-bg opacity-5" />
-          <CardContent className="relative p-8">
-            <div className="flex flex-col md:flex-row items-center gap-8">
-              <TrustScoreRing score={report.trustScore} size={160} />
-              <div className="flex-1 text-center md:text-left">
-                <div className="flex flex-wrap gap-2 mb-3 justify-center md:justify-start">
-                  <Badge variant={statusVariant} className="text-sm px-3 py-1">{report.status}</Badge>
-                  <Badge variant="outline">{report.topic}</Badge>
-                  <Badge variant="outline">{report.inputType}</Badge>
-                </div>
-                <h1 className="text-xl font-bold text-foreground mb-3 leading-snug">&ldquo;{report.claim}&rdquo;</h1>
-                <p className="text-sm text-muted-foreground leading-relaxed">{report.summary}</p>
-                <div className="flex flex-wrap gap-4 mt-4">
-                  <div><div className="text-xs text-muted-foreground">Confidence</div><div className="text-sm font-semibold text-foreground">{report.confidence}%</div></div>
-                  <div><div className="text-xs text-muted-foreground">Sources</div><div className="text-sm font-semibold text-foreground">{report.sources.length} analyzed</div></div>
-                  <div><div className="text-xs text-muted-foreground">Verified at</div><div className="text-sm font-semibold text-foreground">{formatDate(report.createdAt)}</div></div>
-                </div>
-              </div>
+      {/* Hero Panel */}
+      <div className="glass rounded-xl border border-white/10 overflow-hidden shadow-2xl relative bg-white/3">
+        <div className="absolute top-0 right-0 w-96 h-96 bg-[#B58B63]/3 rounded-full blur-[100px] pointer-events-none" />
+        <div className="p-8 space-y-6">
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <div className="flex flex-wrap gap-2">
+              <span className="text-[10px] font-mono text-[#B58B63] bg-[#B58B63]/10 border border-[#B58B63]/25 px-2.5 py-1 rounded">
+                AUDIT REPORT ID-{report.id.substring(0, 6).toUpperCase()}
+              </span>
+              <Badge variant={statusVariant} className="font-mono text-[9px] uppercase tracking-wider px-2 py-0.5">{report.status}</Badge>
+              <Badge variant="outline" className="border-white/10 text-xs font-mono text-[#A79E9C] uppercase">{report.topic}</Badge>
             </div>
-          </CardContent>
-        </div>
-      </Card>
+            <span className="text-xs font-mono text-[#A79E9C]">
+              AUDITED: {formatDate(report.createdAt)}
+            </span>
+          </div>
 
-      {/* Credibility Factors */}
-      <Card>
-        <CardHeader><CardTitle>Credibility Factors</CardTitle></CardHeader>
-        <CardContent className="space-y-4">
-          {report.credibilityFactors.map((factor, i) => (
-            <div key={i}>
-              <div className="flex items-center justify-between mb-1.5">
-                <div className="flex items-center gap-2">
-                  {factor.impact === 'positive' ? <CheckCircle size={14} className="text-green-500" /> :
-                   factor.impact === 'negative' ? <XCircle size={14} className="text-red-500" /> :
-                   <Minus size={14} className="text-yellow-500" />}
-                  <span className="text-sm font-medium text-foreground">{factor.name}</span>
+          <h2 className="text-xl md:text-2xl font-display font-bold text-white leading-snug">
+            &ldquo;{report.claim}&rdquo;
+          </h2>
+
+          <p className="text-sm text-[#A79E9C] leading-relaxed border-l-2 border-[#B58B63]/30 pl-4 py-1">
+            {report.summary}
+          </p>
+        </div>
+      </div>
+
+      {/* Middle Grid: Confidence Center & Semantic Auditor Accordion */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
+        
+        {/* Left Side: Confidence Center */}
+        <div className="lg:col-span-5">
+          <Card className="border-white/10 bg-[#1e272b]/40 backdrop-blur-md h-full flex flex-col items-center justify-center p-8 text-center space-y-6">
+            <div className="relative">
+              {/* Backlight halo effect */}
+              <div className="absolute inset-0 bg-[#B58B63]/8 rounded-full blur-2xl pointer-events-none" />
+              <TrustScoreRing score={report.trustScore} size={180} />
+            </div>
+
+            <div className="space-y-2">
+              <h3 className="text-sm font-mono uppercase tracking-widest text-[#B58B63]">VERDICT VALIDATION STAMP</h3>
+              <p className="text-xs text-[#A79E9C] max-w-xs font-mono uppercase tracking-wider">
+                This claim exhibits <span className={scoreTextColor}>{report.trustScore}% trust rating</span> across corroborative network index checks.
+              </p>
+            </div>
+          </Card>
+        </div>
+
+        {/* Right Side: Accordion & Credibility Factors */}
+        <div className="lg:col-span-7 space-y-6">
+          <Card className="border-white/10 bg-[#1e272b]/40 backdrop-blur-md">
+            <CardHeader className="border-b border-white/5">
+              <CardTitle className="text-white flex items-center gap-2 font-display text-sm">
+                <Shield size={14} className="text-[#B58B63]" />
+                Semantic Auditor Analysis
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-0 divide-y divide-white/5">
+              {accordionItems.map((item) => (
+                <div key={item.id}>
+                  <button
+                    onClick={() => setOpenAccordion(openAccordion === item.id ? null : item.id)}
+                    className="w-full flex items-center justify-between px-6 py-4 text-left hover:bg-white/5 transition-colors"
+                  >
+                    <span className="font-semibold text-xs font-mono uppercase tracking-wider text-[#C9C0B9]">
+                      {item.title}
+                    </span>
+                    <ChevronDown
+                      size={14}
+                      className={`text-[#A79E9C] transition-transform ${openAccordion === item.id ? 'rotate-180' : ''}`}
+                    />
+                  </button>
+                  {openAccordion === item.id && (
+                    <motion.div
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: 'auto', opacity: 1 }}
+                      className="px-6 pb-4"
+                    >
+                      <p className="text-xs font-mono text-[#A79E9C] leading-relaxed whitespace-pre-line">{item.content}</p>
+                    </motion.div>
+                  )}
                 </div>
-                <span className={`text-sm font-bold ${factor.score >= 70 ? 'text-green-500' : factor.score >= 40 ? 'text-yellow-500' : 'text-red-500'}`}>{factor.score}/100</span>
+              ))}
+            </CardContent>
+          </Card>
+        </div>
+
+      </div>
+
+      {/* Credibility progress bars */}
+      <Card className="border-white/10 bg-[#1e272b]/40 backdrop-blur-md">
+        <CardHeader className="border-b border-white/5">
+          <CardTitle className="text-white flex items-center gap-2 font-display text-sm">
+            <Sparkles size={14} className="text-[#B58B63]" /> Credibility Index Factors
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+          {report.credibilityFactors.map((factor, i) => (
+            <div key={i} className="space-y-1.5 border border-white/5 rounded-lg p-4 bg-black/10">
+              <div className="flex justify-between items-center text-xs font-mono">
+                <span className="text-white uppercase font-bold">{factor.name}</span>
+                <span className="text-[#B58B63]">{factor.score}/100</span>
               </div>
-              <Progress value={factor.score} size="sm" />
-              <p className="text-xs text-muted-foreground mt-1">{factor.description}</p>
+              <Progress value={factor.score} size="sm" barClassName="bg-[#B58B63]" className="bg-white/5" />
+              <p className="text-[11px] text-[#A79E9C] leading-normal pt-1">{factor.description}</p>
             </div>
           ))}
         </CardContent>
       </Card>
 
-      {/* Source Comparison Table */}
-      <Card>
-        <CardHeader><CardTitle>Source Comparison</CardTitle></CardHeader>
+      {/* Source Reference Grid */}
+      <Card className="border-white/10 bg-[#1e272b]/40 backdrop-blur-md">
+        <CardHeader className="border-b border-white/5">
+          <CardTitle className="text-white flex items-center gap-2 font-display text-sm">
+            <Globe size={14} className="text-[#B58B63]" /> Source Reference Grid
+          </CardTitle>
+        </CardHeader>
         <CardContent className="p-0">
           <div className="overflow-x-auto">
-            <table className="w-full">
+            <table className="w-full border-collapse">
               <thead>
-                <tr className="border-b border-border">
-                  <th className="text-left px-6 py-3 text-xs font-medium text-muted-foreground uppercase">Source</th>
-                  <th className="text-left px-4 py-3 text-xs font-medium text-muted-foreground uppercase">Reliability</th>
-                  <th className="text-left px-4 py-3 text-xs font-medium text-muted-foreground uppercase">Supports</th>
-                  <th className="text-left px-4 py-3 text-xs font-medium text-muted-foreground uppercase">Category</th>
-                  <th className="text-left px-4 py-3 text-xs font-medium text-muted-foreground uppercase">Date</th>
+                <tr className="border-b border-white/5 bg-white/5 text-[9px] font-mono text-[#A79E9C] uppercase tracking-widest">
+                  <th className="text-left px-6 py-4 font-semibold">Audited Source</th>
+                  <th className="text-left px-4 py-4 font-semibold">Reliability</th>
+                  <th className="text-left px-4 py-4 font-semibold">Alignment</th>
+                  <th className="text-left px-4 py-4 font-semibold">Category</th>
+                  <th className="text-left px-6 py-4 font-semibold">Date Logged</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-border">
+              <tbody className="divide-y divide-white/5 text-xs font-mono text-[#C9C0B9]">
                 {report.sources.map((source: Source) => (
-                  <tr key={source.id} className="hover:bg-accent/30 transition-colors">
-                    <td className="px-6 py-4">
-                      <div>
-                        <div className="flex items-center gap-1.5">
-                          <span className="text-sm font-medium text-foreground">{source.name}</span>
-                          <a href={source.url} target="_blank" rel="noopener noreferrer"><ExternalLink size={12} className="text-muted-foreground hover:text-primary" /></a>
+                  <tr key={source.id} className="hover:bg-white/5 transition-colors group">
+                    <td className="px-6 py-4 max-w-sm">
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-2">
+                          <span className="font-semibold text-white group-hover:text-[#B58B63] transition-colors">{source.name}</span>
+                          <a
+                            href={source.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-[#A79E9C] hover:text-white"
+                          >
+                            <ExternalLink size={12} />
+                          </a>
                         </div>
-                        <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">{source.excerpt}</p>
+                        <p className="text-[11px] text-[#A79E9C] line-clamp-1 leading-normal">{source.excerpt}</p>
                       </div>
                     </td>
                     <td className="px-4 py-4"><ReliabilityDot score={source.reliability} /></td>
                     <td className="px-4 py-4">
-                      {source.supportsClaim ? <CheckCircle size={14} className="text-green-500" /> : <XCircle size={14} className="text-red-500" />}
+                      {source.supportsClaim ? (
+                        <span className="text-green-400 bg-green-500/10 border border-green-500/20 px-2 py-0.5 rounded text-[10px] uppercase font-bold">SUPPORTS</span>
+                      ) : (
+                        <span className="text-red-400 bg-red-500/10 border border-red-500/20 px-2 py-0.5 rounded text-[10px] uppercase font-bold">CONTRADICTS</span>
+                      )}
                     </td>
-                    <td className="px-4 py-4"><Badge variant="outline" className="text-xs">{source.category}</Badge></td>
-                    <td className="px-4 py-4"><span className="text-xs text-muted-foreground">{new Date(source.publishedAt).toLocaleDateString()}</span></td>
+                    <td className="px-4 py-4">
+                      <span className="text-[10px] text-[#A79E9C] uppercase">{source.category}</span>
+                    </td>
+                    <td className="px-6 py-4 text-[#A79E9C]">
+                      {new Date(source.publishedAt).toLocaleDateString()}
+                    </td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
-        </CardContent>
-      </Card>
-
-      {/* Explainability Accordion */}
-      <Card>
-        <CardHeader><CardTitle>Explainability Report</CardTitle></CardHeader>
-        <CardContent className="p-0">
-          {accordionItems.map((item) => (
-            <div key={item.id} className="border-b border-border last:border-0">
-              <button onClick={() => setOpenAccordion(openAccordion === item.id ? null : item.id)}
-                className="w-full flex items-center justify-between px-6 py-4 text-left hover:bg-accent/30 transition-colors">
-                <span className="font-medium text-sm text-foreground">{item.title}</span>
-                <ChevronDown size={16} className={`text-muted-foreground transition-transform ${openAccordion === item.id ? 'rotate-180' : ''}`} />
-              </button>
-              {openAccordion === item.id && (
-                <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} className="px-6 pb-4">
-                  <p className="text-sm text-muted-foreground leading-relaxed">{item.content}</p>
-                </motion.div>
-              )}
-            </div>
-          ))}
         </CardContent>
       </Card>
     </motion.div>
