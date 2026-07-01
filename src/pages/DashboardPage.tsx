@@ -1,12 +1,13 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Search, Link2, Image, ArrowRight, Sparkles, Shield, AlertCircle, Upload, Terminal, Cpu } from 'lucide-react'
+import { Search, Link2, Image, ArrowRight, Sparkles, Shield, AlertCircle, Upload, Terminal, Cpu, Loader2 } from 'lucide-react'
 import { useVerification } from '../contexts/VerificationContext'
 import { AnalysisPipeline } from '../components/features/AnalysisPipeline'
 import { Button } from '../components/ui/Button'
 import { Card, CardContent } from '../components/ui/Card'
 import { Badge } from '../components/ui/Badge'
+import { useToast } from '../components/ui/Toaster'
 import { MOCK_REPORTS } from '../data/mockData'
 
 type InputTab = 'text' | 'url' | 'screenshot'
@@ -39,11 +40,15 @@ const LIVE_FEEDS = [
 export function DashboardPage() {
   const navigate = useNavigate()
   const { verify, isAnalyzing, analysisStep } = useVerification()
+  const { toast } = useToast()
+  
   const [activeTab, setActiveTab] = useState<InputTab>('text')
   const [input, setInput] = useState('')
   const [error, setError] = useState('')
+  const [isDragging, setIsDragging] = useState(false)
+  const [isFileIngesting, setIsFileIngesting] = useState(false)
 
-  // Live rolling logs
+  const fileInputRef = useRef<HTMLInputElement>(null)
   const [logs, setLogs] = useState<string[]>(SYSTEM_LOGS)
   const logContainerRef = useRef<HTMLDivElement>(null)
 
@@ -73,6 +78,126 @@ export function DashboardPage() {
     const reportId = await verify(input, activeTab)
     if (reportId) {
       navigate(`/report/${reportId}`)
+    }
+  }
+
+  // File ingestion handlers
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault()
+    setIsDragging(true)
+  }
+
+  const handleDragLeave = () => {
+    setIsDragging(false)
+  }
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault()
+    setIsDragging(false)
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+      processFile(e.dataTransfer.files[0])
+    }
+  }
+
+  const handleFileSelectClick = () => {
+    fileInputRef.current?.click()
+  }
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      processFile(e.target.files[0])
+    }
+  }
+
+  const processFile = async (file: File) => {
+    const extension = file.name.split('.').pop()?.toLowerCase()
+    
+    if (extension === 'txt') {
+      setIsFileIngesting(true)
+      setLogs(prev => [...prev, `PROCESS: Ingesting text packet: ${file.name}`])
+      const reader = new FileReader()
+      reader.onload = (e) => {
+        const text = e.target?.result as string
+        setActiveTab('text')
+        setInput(text)
+        setIsFileIngesting(false)
+        setLogs(prev => [...prev, `SYSTEM: Text packet decoding complete. Length: ${text.length} chars`])
+        toast({
+          type: 'success',
+          title: 'Text Packet Ingested',
+          description: 'Ready to run verification.'
+        })
+      }
+      reader.readAsText(file)
+    } else if (['png', 'jpg', 'jpeg'].includes(extension || '')) {
+      setIsFileIngesting(true)
+      setActiveTab('screenshot')
+      setLogs(prev => [...prev, `PROCESS: Loading screenshot: ${file.name}. Triggering Cognitive OCR...`])
+      toast({
+        type: 'info',
+        title: 'Image Ingested',
+        description: 'Analyzing layout and performing claim extraction...'
+      })
+      
+      // Simulate highly advanced cognitive OCR extraction with a timeout
+      setTimeout(() => {
+        const lowerName = file.name.toLowerCase()
+        let claim = ''
+        if (lowerName.includes('laptop')) {
+          claim = 'Government announces free laptops for every student nationwide'
+        } else if (lowerName.includes('dengue')) {
+          claim = 'WHO releases new dengue advisory for Southeast Asian countries'
+        } else if (lowerName.includes('fuel')) {
+          claim = 'Fuel prices reduced nationwide by 15% effective immediately'
+        } else if (lowerName.includes('diabetes')) {
+          claim = 'Scientists discover new treatment that cures type 2 diabetes completely'
+        } else if (lowerName.includes('flat')) {
+          claim = 'The Earth is flat rather than an oblate spheroid'
+        } else if (lowerName.includes('covid') || lowerName.includes('breath')) {
+          claim = 'Holding your breath for 10 seconds proves you do not have COVID-19'
+        } else {
+          // Fallback based on name keywords or mock OCR text
+          claim = `OCR Match: The following assertion was extracted from ${file.name}: "Clinical studies confirm secondary infection risks increase without preventative vaccines."`
+        }
+
+        setInput(claim)
+        setIsFileIngesting(false)
+        setLogs(prev => [...prev, `AUDIT: OCR analysis complete. Extracted claim from file: "${claim.substring(0, 40)}..."`])
+        toast({
+          type: 'success',
+          title: 'OCR Extraction Successful',
+          description: 'Extracted text populated below.'
+        })
+      }, 1500)
+    } else if (extension === 'pdf') {
+      setIsFileIngesting(true)
+      setActiveTab('text')
+      setLogs(prev => [...prev, `PROCESS: Parsing PDF payload: ${file.name}...`])
+      toast({
+        type: 'info',
+        title: 'PDF Payload Received',
+        description: 'Reconstructing semantic vector indices...'
+      })
+
+      // Simulate PDF parser
+      setTimeout(() => {
+        const claim = `PDF Abstract: Verified research confirms that the new global temperature indicators for this season align directly with historical highs.`
+        setInput(claim)
+        setIsFileIngesting(false)
+        setLogs(prev => [...prev, `SYSTEM: PDF vectorized. Extracted abstract claim: "${claim.substring(0, 40)}..."`])
+        toast({
+          type: 'success',
+          title: 'PDF Successfully Vectorized',
+          description: 'Document content parsed.'
+        })
+      }, 1500)
+    } else {
+      setLogs(prev => [...prev, `ERROR: Unsupported file signature for ${file.name}`])
+      toast({
+        type: 'error',
+        title: 'Ingestion Blocked',
+        description: 'Format not supported. Please use TXT, PDF, JPEG, or PNG.'
+      })
     }
   }
 
@@ -132,12 +257,37 @@ export function DashboardPage() {
                 ))}
               </div>
 
+              {/* Hidden file input */}
+              <input
+                type="file"
+                ref={fileInputRef}
+                onChange={handleFileChange}
+                accept=".txt,.pdf,.png,.jpg,.jpeg"
+                className="hidden"
+              />
+
               {/* Ingestion Drag & Drop Zone */}
-              <div className="border border-dashed border-[#B58B63]/30 bg-black/20 rounded-xl p-8 flex flex-col items-center justify-center text-center group hover:border-[#B58B63]/60 transition-all cursor-pointer">
+              <div
+                onDragOver={handleDragOver}
+                onDragLeave={handleDragLeave}
+                onDrop={handleDrop}
+                onClick={handleFileSelectClick}
+                className={`border border-dashed rounded-xl p-8 flex flex-col items-center justify-center text-center group transition-all cursor-pointer bg-black/20 ${
+                  isDragging
+                    ? 'border-[#B58B63] bg-[#B58B63]/5 scale-[0.99]'
+                    : 'border-[#B58B63]/30 hover:border-[#B58B63]/60'
+                }`}
+              >
                 <div className="w-12 h-12 rounded-full bg-[#B58B63]/10 border border-[#B58B63]/25 flex items-center justify-center mb-3 group-hover:scale-105 transition-transform">
-                  <Upload size={18} className="text-[#B58B63]" />
+                  {isFileIngesting ? (
+                    <Loader2 size={18} className="text-[#B58B63] animate-spin" />
+                  ) : (
+                    <Upload size={18} className="text-[#B58B63]" />
+                  )}
                 </div>
-                <span className="text-xs font-mono text-white uppercase tracking-wider">Drag & drop files to ingest</span>
+                <span className="text-xs font-mono text-white uppercase tracking-wider">
+                  {isFileIngesting ? 'Ingesting data packet...' : 'Drag & drop files to ingest'}
+                </span>
                 <span className="text-[10px] text-[#A79E9C] font-mono mt-1 uppercase">Supports TXT, PDF, JPEG, PNG</span>
               </div>
 
