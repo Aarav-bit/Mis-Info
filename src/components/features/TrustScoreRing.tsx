@@ -11,8 +11,8 @@ interface TrustScoreRingProps {
 }
 
 function getScoreColors(score: number): [string, string] {
-  if (score >= 75) return ['#B58B63', '#8b6843'] // Premium Copper stops
-  if (score >= 50) return ['#C9C0B9', '#A79E9C'] // Warm Beige/Gray stops
+  if (score >= 75) return ['#0F969C', '#0C7075'] // Premium Copper stops
+  if (score >= 50) return ['#E6F3F5', '#6DA5C0'] // Warm Beige/Gray stops
   return ['#ef4444', '#b91c1c'] // Danger red stops
 }
 
@@ -24,7 +24,7 @@ export function TrustScoreRing({ score, size = 180, strokeWidth = 10, className,
   const gradientId = `score-gradient-${score}`
   
   const statusText = score >= 80 ? 'Verified' : score >= 65 ? 'Likely Credible' : score >= 40 ? 'Needs Verification' : 'Likely False'
-  const textClassColor = score >= 75 ? 'text-[#B58B63]' : score >= 50 ? 'text-[#C9C0B9]' : 'text-red-400'
+  const textClassColor = score >= 75 ? 'text-[#0F969C]' : score >= 50 ? 'text-[#E6F3F5]' : 'text-red-400'
 
   return (
     <div className={cn('relative inline-flex flex-col items-center', className)}>
@@ -67,7 +67,7 @@ export function TrustScoreRing({ score, size = 180, strokeWidth = 10, className,
           >
             {score}
           </motion.span>
-          <span className="text-[10px] font-mono text-[#A79E9C] mt-1 uppercase tracking-widest">/ 100</span>
+          <span className="text-[10px] font-mono text-[#6DA5C0] mt-1 uppercase tracking-widest">/ 100</span>
           <span className={cn('text-xs font-semibold font-mono uppercase tracking-wider mt-2', textClassColor)}>
             {statusText}
           </span>

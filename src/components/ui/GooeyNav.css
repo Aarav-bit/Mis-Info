@@ -60,7 +60,7 @@
     color 0.3s ease,
     box-shadow 0.3s ease;
   box-shadow: 0 0 0.5px 1.5px transparent;
-  color: #A79E9C;
+  color: #6DA5C0;
   width: 100%;
 }
 
@@ -79,12 +79,12 @@
 }
 
 .gooey-nav-container nav ul li.active {
-  color: #1A1A1A;
+  color: #05161A;
   font-weight: 600;
 }
 
 .gooey-nav-container nav ul li.active a {
-  color: #1A1A1A;
+  color: #05161A;
 }
 
 /* The selection pill background behind the active item */
@@ -93,7 +93,7 @@
   position: absolute;
   inset: 0;
   border-radius: 8px;
-  background: #B58B63; /* Copper Accent */
+  background: #0F969C; /* Copper Accent */
   opacity: 0;
   transform: scale(0.9);
   transition: all 0.3s ease;
@@ -121,7 +121,7 @@
 }
 
 .gooey-nav-container .effect.text {
-  color: #A79E9C;
+  color: #6DA5C0;
   font-family: inherit;
   font-size: 0.875rem;
   font-weight: 600;
@@ -130,7 +130,7 @@
 }
 
 .gooey-nav-container .effect.text.active {
-  color: #1A1A1A;
+  color: #05161A;
 }
 
 .gooey-nav-container .effect.filter {
@@ -150,7 +150,7 @@
   content: '';
   position: absolute;
   inset: 0;
-  background: #B58B63; /* Copper bubble color */
+  background: #0F969C; /* Copper bubble color */
   transform: scale(0);
   opacity: 0;
   z-index: -1;

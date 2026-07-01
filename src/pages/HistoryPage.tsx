@@ -33,7 +33,7 @@ export function HistoryPage() {
 
   const stats = [
     { label: 'Total Audits Indexed', value: totalCount, highlight: 'text-white' },
-    { label: 'Verified True Nodes', value: trueCount, highlight: 'text-[#B58B63]' },
+    { label: 'Verified True Nodes', value: trueCount, highlight: 'text-[#0F969C]' },
     { label: 'Uncertain Calibration', value: uncertainCount, highlight: 'text-yellow-400' },
     { label: 'Exposed Misinformation', value: falseCount, highlight: 'text-red-400' },
   ]
@@ -45,8 +45,8 @@ export function HistoryPage() {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-white/5 pb-6">
         <div>
           <div className="flex items-center gap-2">
-            <FolderKanban size={14} className="text-[#B58B63]" />
-            <span className="text-[10px] font-mono tracking-widest text-[#B58B63] uppercase">DIGITAL CORROBORATION VAULT</span>
+            <FolderKanban size={14} className="text-[#0F969C]" />
+            <span className="text-[10px] font-mono tracking-widest text-[#0F969C] uppercase">DIGITAL CORROBORATION VAULT</span>
           </div>
           <h1 className="text-2xl font-display font-bold text-white tracking-tight mt-1">Audited Records Archive</h1>
         </div>
@@ -59,15 +59,15 @@ export function HistoryPage() {
               value={search}
               onChange={e => setSearch(e.target.value)}
               placeholder="Search index keywords..."
-              className="h-10 pl-9 pr-4 rounded bg-black/40 border border-white/10 text-xs font-mono text-[#C9C0B9] focus:outline-none focus:border-[#B58B63] transition-all w-52"
+              className="h-10 pl-9 pr-4 rounded bg-black/40 border border-white/10 text-xs font-mono text-[#E6F3F5] focus:outline-none focus:border-[#0F969C] transition-all w-52"
             />
-            <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#A79E9C]" />
+            <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#6DA5C0]" />
           </div>
           
           <select
             value={categoryFilter}
             onChange={e => setCategoryFilter(e.target.value)}
-            className="h-10 px-3 rounded bg-black/40 border border-white/10 text-xs font-mono text-[#A79E9C] focus:outline-none focus:border-[#B58B63]"
+            className="h-10 px-3 rounded bg-black/40 border border-white/10 text-xs font-mono text-[#6DA5C0] focus:outline-none focus:border-[#0F969C]"
           >
             <option value="all">ALL CATEGORIES</option>
             {topics.filter(t => t !== 'all').map(topic => (
@@ -79,7 +79,7 @@ export function HistoryPage() {
             variant="outline"
             size="sm"
             onClick={() => setFilter(p => p === 'all' ? 'bookmarked' : 'all')}
-            className={`h-10 border-white/10 ${filter === 'bookmarked' ? 'bg-[#B58B63]/10 border-[#B58B63]/30 text-white' : 'text-[#A79E9C]'}`}
+            className={`h-10 border-white/10 ${filter === 'bookmarked' ? 'bg-[#0F969C]/10 border-[#0F969C]/30 text-white' : 'text-[#6DA5C0]'}`}
           >
             {filter === 'bookmarked' ? 'BOOKMARKS ACTIVE' : 'BOOKMARKS'}
           </Button>
@@ -89,10 +89,10 @@ export function HistoryPage() {
       {/* Stats Overview Grid */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {stats.map((stat, i) => (
-          <Card key={i} className="border border-white/5 bg-[#1e272b]/30">
+          <Card key={i} className="border border-white/5 bg-[#072e33]/30">
             <CardContent className="p-5 text-center">
               <div className={`text-2xl font-display font-bold ${stat.highlight}`}>{stat.value}</div>
-              <div className="text-[10px] font-mono text-[#A79E9C] uppercase tracking-wider mt-2">{stat.label}</div>
+              <div className="text-[10px] font-mono text-[#6DA5C0] uppercase tracking-wider mt-2">{stat.label}</div>
             </CardContent>
           </Card>
         ))}
@@ -101,10 +101,10 @@ export function HistoryPage() {
       {/* Archive Grid (3 Columns) */}
       <div>
         {filtered.length === 0 ? (
-          <div className="text-center py-16 bg-[#1e272b]/20 border border-white/5 rounded-xl p-8 max-w-sm mx-auto">
-            <Clock size={36} className="mx-auto mb-4 text-[#A79E9C]" />
-            <p className="font-mono text-sm text-[#C9C0B9]">NO VAULT ENTRIES FOUND</p>
-            <p className="text-xs text-[#A79E9C] mt-1 font-mono uppercase">Adjust index queries or filters.</p>
+          <div className="text-center py-16 bg-[#072e33]/20 border border-white/5 rounded-xl p-8 max-w-sm mx-auto">
+            <Clock size={36} className="mx-auto mb-4 text-[#6DA5C0]" />
+            <p className="font-mono text-sm text-[#E6F3F5]">NO VAULT ENTRIES FOUND</p>
+            <p className="text-xs text-[#6DA5C0] mt-1 font-mono uppercase">Adjust index queries or filters.</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -121,32 +121,32 @@ export function HistoryPage() {
                   initial={{ opacity: 0, y: 15 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: index * 0.05, duration: 0.4 }}
-                  whileHover={{ y: -4, borderColor: 'rgba(181,139,99,0.3)' }}
+                  whileHover={{ y: -4, borderColor: 'rgba(15, 150, 156,0.3)' }}
                   onClick={() => navigate(`/report/${report.id}`)}
-                  className={`glass rounded-xl border border-white/5 p-5 bg-[#1e272b]/30 cursor-pointer flex flex-col justify-between h-[210px] transition-all duration-200 group ${borderStyle}`}
+                  className={`glass rounded-xl border border-white/5 p-5 bg-[#072e33]/30 cursor-pointer flex flex-col justify-between h-[210px] transition-all duration-200 group ${borderStyle}`}
                 >
                   <div className="space-y-3">
                     <div className="flex justify-between items-start gap-2">
-                      <span className="text-[10px] font-mono text-[#A79E9C] uppercase tracking-wider">{report.topic}</span>
+                      <span className="text-[10px] font-mono text-[#6DA5C0] uppercase tracking-wider">{report.topic}</span>
                       <button
                         onClick={e => { e.stopPropagation(); toggleBookmark(report.id) }}
-                        className="text-[#A79E9C] hover:text-[#B58B63] transition-colors"
+                        className="text-[#6DA5C0] hover:text-[#0F969C] transition-colors"
                       >
                         {report.bookmarked ? (
-                          <BookmarkCheck size={16} className="text-[#B58B63]" />
+                          <BookmarkCheck size={16} className="text-[#0F969C]" />
                         ) : (
                           <Bookmark size={16} />
                         )}
                       </button>
                     </div>
 
-                    <p className="text-xs font-semibold font-mono text-white leading-relaxed line-clamp-3 group-hover:text-[#B58B63] transition-colors">
+                    <p className="text-xs font-semibold font-mono text-white leading-relaxed line-clamp-3 group-hover:text-[#0F969C] transition-colors">
                       &ldquo;{report.claim}&rdquo;
                     </p>
                   </div>
 
                   <div className="flex items-center justify-between pt-4 border-t border-white/5 mt-auto">
-                    <span className="text-[10px] font-mono text-[#A79E9C]">
+                    <span className="text-[10px] font-mono text-[#6DA5C0]">
                       {new Date(report.createdAt).toLocaleDateString()}
                     </span>
                     

@@ -14,18 +14,18 @@ interface AnalysisPipelineProps { currentStep: number }
 
 export function AnalysisPipeline({ currentStep }: AnalysisPipelineProps) {
   return (
-    <div className="flex flex-col items-center justify-center min-h-[400px] gap-8 bg-[#1e272b]/25 border border-white/5 rounded-2xl p-8 backdrop-blur-md">
+    <div className="flex flex-col items-center justify-center min-h-[400px] gap-8 bg-[#072e33]/25 border border-white/5 rounded-2xl p-8 backdrop-blur-md">
       <motion.div
         animate={{ scale: [1, 1.05, 1], opacity: [0.8, 1, 0.8] }}
         transition={{ duration: 2, repeat: Infinity }}
-        className="w-20 h-20 rounded-2xl bg-[#B58B63]/10 border border-[#B58B63]/30 flex items-center justify-center shadow-[0_0_24px_rgba(181,139,99,0.15)]"
+        className="w-20 h-20 rounded-2xl bg-[#0F969C]/10 border border-[#0F969C]/30 flex items-center justify-center shadow-[0_0_24px_rgba(15, 150, 156,0.15)]"
       >
-        <Brain size={36} className="text-[#B58B63]" />
+        <Brain size={36} className="text-[#0F969C]" />
       </motion.div>
 
       <div className="text-center">
         <h2 className="text-xl font-display font-bold text-white">Analyzing Content</h2>
-        <p className="text-xs text-[#A79E9C] font-mono uppercase tracking-wider mt-1.5">AI is verifying your content against trusted sources</p>
+        <p className="text-xs text-[#6DA5C0] font-mono uppercase tracking-wider mt-1.5">AI is verifying your content against trusted sources</p>
       </div>
 
       <div className="w-full max-w-md space-y-4">
@@ -46,14 +46,14 @@ export function AnalysisPipeline({ currentStep }: AnalysisPipelineProps) {
                 isDone
                   ? 'bg-green-500/10 border-green-500/30 text-green-400'
                   : isActive
-                    ? 'border-[#B58B63] bg-[#B58B63]/10 text-[#B58B63]'
-                    : 'border-white/5 bg-white/5 text-[#A79E9C]'
+                    ? 'border-[#0F969C] bg-[#0F969C]/10 text-[#0F969C]'
+                    : 'border-white/5 bg-white/5 text-[#6DA5C0]'
               }`}>
                 {isDone ? <Check size={14} /> : <StepIcon size={16} />}
               </div>
               <div className="flex-1">
                 <div className="flex items-center justify-between">
-                  <span className={`text-sm font-medium ${isDone ? 'text-green-400' : isActive ? 'text-white' : 'text-[#A79E9C]'}`}>
+                  <span className={`text-sm font-medium ${isDone ? 'text-green-400' : isActive ? 'text-white' : 'text-[#6DA5C0]'}`}>
                     {step.label}
                   </span>
                   {isDone && <span className="text-xs font-mono text-green-400/80 uppercase">Done</span>}
@@ -64,7 +64,7 @@ export function AnalysisPipeline({ currentStep }: AnalysisPipelineProps) {
                           key={i}
                           animate={{ y: [-2, 2, -2] }}
                           transition={{ duration: 0.6, delay: i * 0.15, repeat: Infinity }}
-                          className="w-1 h-1 rounded-full bg-[#B58B63]"
+                          className="w-1 h-1 rounded-full bg-[#0F969C]"
                         />
                       ))}
                     </motion.div>
@@ -73,7 +73,7 @@ export function AnalysisPipeline({ currentStep }: AnalysisPipelineProps) {
                 {isActive && (
                   <div className="mt-2 h-1 bg-white/5 rounded-full overflow-hidden">
                     <motion.div
-                      className="h-full bg-[#B58B63] rounded-full"
+                      className="h-full bg-[#0F969C] rounded-full"
                       animate={{ width: ['0%', '100%'] }}
                       transition={{ duration: 1.2, ease: 'easeInOut', repeat: Infinity }}
                     />

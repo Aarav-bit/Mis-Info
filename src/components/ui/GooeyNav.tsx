@@ -29,7 +29,7 @@ const GooeyNav: React.FC<GooeyNavProps> = ({
   particleDistances = [50, 5],
   particleR = 50,
   timeVariance = 150,
-  colors = ['#B58B63', '#3D4D55', '#C9C0B9'], // Copper, Teal, Beige particles
+  colors = ['#0F969C', '#072E33', '#E6F3F5'], // Copper, Teal, Beige particles
   initialActiveIndex = 0
 }) => {
   const navigate = useNavigate();
@@ -211,13 +211,13 @@ const GooeyNav: React.FC<GooeyNavProps> = ({
                   <Icon
                     size={18}
                     className={`flex-shrink-0 relative z-10 transition-colors ${
-                      isActive ? 'text-[#1A1A1A]' : 'text-[#A79E9C] group-hover:text-[#C9C0B9]'
+                      isActive ? 'text-[#05161A]' : 'text-[#6DA5C0] group-hover:text-[#E6F3F5]'
                     }`}
                   />
                   {sidebarOpen ? (
                     <span className="relative z-10 truncate">{item.label}</span>
                   ) : (
-                    <div className="absolute left-full ml-4 px-2.5 py-1.5 bg-[#253035] text-[#C9C0B9] text-xs rounded border border-white/10 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50 shadow-lg">
+                    <div className="absolute left-full ml-4 px-2.5 py-1.5 bg-[#072E33] text-[#E6F3F5] text-xs rounded border border-white/10 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50 shadow-lg">
                       {item.label}
                     </div>
                   )}
