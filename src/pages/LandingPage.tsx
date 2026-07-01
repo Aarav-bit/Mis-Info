@@ -6,8 +6,8 @@ import {
   Brain, Zap, FileText, Search, ScanLine, ChevronDown,
   Star, BookOpen, Activity
 } from 'lucide-react'
+import DotField from '../components/ui/DotField'
 
-// ─── Color Palette ──────────────────────────────────────────────────────────
 // #1A1A1A  near-black background
 // #3D4D55  dark teal (containers, structural)
 // #A79E9C  warm medium gray (secondary text)
@@ -301,12 +301,20 @@ export function LandingPage() {
 
   return (
     <div style={{ minHeight: '100vh', background: '#1A1A1A', overflowX: 'hidden', position: 'relative' }}>
-      {/* Mesh grid background */}
-      <div style={{
-        position: 'fixed', inset: 0, pointerEvents: 'none', zIndex: 0,
-        backgroundImage: 'linear-gradient(to right, rgba(255,255,255,0.03) 1px, transparent 1px), linear-gradient(to bottom, rgba(255,255,255,0.03) 1px, transparent 1px)',
-        backgroundSize: '40px 40px',
-      }} />
+      {/* Interactive DotField Background */}
+      <div style={{ position: 'fixed', inset: 0, pointerEvents: 'none', zIndex: 0 }}>
+        <DotField
+          dotRadius={1.2}
+          dotSpacing={16}
+          bulgeStrength={50}
+          glowRadius={200}
+          sparkle={true}
+          waveAmplitude={0}
+          gradientFrom="rgba(181, 139, 99, 0.07)" // Copper Accent
+          gradientTo="rgba(61, 77, 85, 0.03)"     // Dark Teal
+          glowColor="#1A1A1A"
+        />
+      </div>
 
       {/* ── Navigation ─────────────────────────────────────────────────── */}
       <nav style={{
