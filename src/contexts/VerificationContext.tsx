@@ -630,12 +630,26 @@ export function VerificationProvider({ children }: { children: React.ReactNode }
     setAnalysisStep(5)
 
     // sourceReliability = WHAT reliable sources say about this claim (not how reliable they are).
-    // If a fact-checker (reliability=95) says the claim is FALSE, the claim's sourceReliability
-    // should be LOW (~12), not HIGH (95). evidenceReport.trustScore already encodes this correctly
-    // (ratingToScore("False") ≈ 12, ratingToScore("True") ≈ 93).
+    //
+    // Conflict resolution: Fact-checkers frequently debunk RELATED counter-claims rather than
+    // the claim itself. Example: BOOM Fact Check debunks "China landed first near Moon's south pole"
+    // (rating: False), but we're verifying "India/Chandrayaan-3 landed near Moon's south pole".
+    // The API matches our query to that fact-check → it shows "False" for the wrong reason.
+    //
+    // When Wikipedia/Wikidata DIRECTLY corroborates the claim (high similarity, high score)
+    // AND the fact-check score is low, the Knowledge Layer is the more relevant signal — it
+    // is literally talking about the same event. In that case, use the knowledge score.
+    const eScore = evidenceReport?.trustScore ?? null
+    const kScore = knowledgeReport?.trustScore ?? null
+
+    const knowledgeOverridesFactCheck =
+      eScore !== null && eScore < 45 &&   // Fact-check returned a low (False) verdict
+      kScore !== null && kScore > 65      // Knowledge base directly corroborates the claim
+
     const sourceReliability = (() => {
-      if (evidenceReport) return evidenceReport.trustScore          // Fact-check verdict (e.g. 12 = False, 93 = True)
-      if (knowledgeReport) return knowledgeReport.trustScore        // Knowledge base corroboration
+      if (knowledgeOverridesFactCheck) return kScore!      // Knowledge base wins (fact-check is about a different sub-claim)
+      if (eScore !== null) return eScore                   // Fact-check verdict (e.g. 12 = False, 93 = True)
+      if (kScore !== null) return kScore                   // Knowledge base corroboration only
       return 0
     })()
 
@@ -647,9 +661,17 @@ export function VerificationProvider({ children }: { children: React.ReactNode }
     const semanticMatch = Math.max(evidenceSemantic, knowledgeSemantic)
 
     // evidenceAgreement = cross-source consensus (0–100).
-    // consensus.agreement is already directional: 0 = all sources oppose claim, 100 = all support.
-    // confidenceBoost adjusts the displayed confidence field only — do NOT mix it into the formula.
-    const evidenceAgreement = Math.max(0, Math.min(99, consensus.agreement))
+    // When knowledge overrides, the agreement should reflect that the knowledge base
+    // sources (which all support the claim) are now the primary evidence.
+    const evidenceAgreement = (() => {
+      if (knowledgeOverridesFactCheck) {
+        // Knowledge sources all support the claim → high agreement for knowledge-verified claims
+        const knowledgeSources = knowledgeReport?.sources ?? []
+        return knowledgeSources.length > 0 ? Math.min(90, 70 + knowledgeSources.length * 8) : 70
+      }
+      // Standard: consensus.agreement is directional (0 = all oppose, 100 = all support)
+      return Math.max(0, Math.min(99, consensus.agreement))
+    })()
 
     // Rule engine: fall back to local keyword database if no API reports found
     let ruleScore = 50
@@ -672,18 +694,27 @@ export function VerificationProvider({ children }: { children: React.ReactNode }
     })
 
     // ── Assemble Final Report ─────────────────────────────────────────────────
-    // Merge sources and credibility factors from all layers
+    // When the knowledge base overrides a mismatched fact-check, use the knowledge
+    // report as primary (correct summary/claimExtracted from Wikipedia/Wikidata),
+    // not the misleading fact-check summary.
     const mergedSources = allSources
-    const primaryReport = evidenceReport ?? knowledgeReport
+    const primaryReport = knowledgeOverridesFactCheck
+      ? (knowledgeReport ?? evidenceReport)   // Knowledge layer wins
+      : (evidenceReport ?? knowledgeReport)   // Fact-check wins by default
 
-    // Credibility factors: trust score breakdown + consensus + linguistic risk
+    // Credibility factors: trust score breakdown + consensus
     const mergedFactors = [
       ...scoreResult.breakdownFactors,
       {
         name: 'Cross-Source Consensus',
-        score: Math.min(99, consensus.agreement + Math.max(0, consensus.confidenceBoost)),
-        description: consensus.explanation,
-        impact: consensus.verdict === 'high' ? 'positive' as const
+        score: knowledgeOverridesFactCheck
+          ? Math.min(99, 70 + (knowledgeReport?.sources.length ?? 1) * 8)  // Knowledge sources agree
+          : Math.min(99, consensus.agreement + Math.max(0, consensus.confidenceBoost)),
+        description: knowledgeOverridesFactCheck
+          ? `Knowledge base (${knowledgeReport?.sources.map(s => s.name).join(', ')}) directly corroborates this claim. Any related fact-check may be about a different sub-claim.`
+          : consensus.explanation,
+        impact: knowledgeOverridesFactCheck ? 'positive' as const
+               : consensus.verdict === 'high' ? 'positive' as const
                : consensus.verdict === 'conflict' ? 'negative' as const
                : 'neutral' as const,
       },
