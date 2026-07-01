@@ -1,11 +1,12 @@
 import React from 'react'
-import { NavLink, useLocation } from 'react-router-dom'
+import { useLocation } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   LayoutDashboard, History, BarChart3, Settings, Info,
   Shield, ChevronLeft, ChevronRight, Zap
 } from 'lucide-react'
 import { cn } from '../../lib/utils'
+import GooeyNav from '../ui/GooeyNav'
 
 const navItems = [
   { to: '/dashboard', icon: LayoutDashboard, label: 'Workspace' },
@@ -14,6 +15,7 @@ const navItems = [
   { to: '/settings', icon: Settings, label: 'Settings' },
   { to: '/about', icon: Info, label: 'About' },
 ]
+
 
 interface SidebarProps {
   open: boolean
@@ -52,50 +54,10 @@ export function Sidebar({ open, onToggle }: SidebarProps) {
         </AnimatePresence>
       </div>
 
-      {/* Nav Items */}
-      <nav className="flex-1 p-2 space-y-1 mt-4">
-        {navItems.map(({ to, icon: Icon, label }) => {
-          const active = location.pathname === to || location.pathname.startsWith(to + '/')
-          return (
-            <NavLink
-              key={to}
-              to={to}
-              className={cn(
-                'flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200 group relative',
-                active
-                  ? 'text-white'
-                  : 'text-[#A79E9C] hover:bg-white/5 hover:text-[#C9C0B9]'
-              )}
-            >
-              {active && (
-                <motion.div
-                  layoutId="sidebar-indicator"
-                  className="absolute inset-0 rounded-lg bg-[#B58B63]/10 border border-[#B58B63]/30 shadow-[0_0_12px_rgba(181,139,99,0.15)]"
-                  transition={{ duration: 0.2 }}
-                />
-              )}
-              <Icon size={18} className={cn('flex-shrink-0 relative z-10', active ? 'text-[#B58B63]' : 'text-[#A79E9C]')} />
-              <AnimatePresence>
-                {open && (
-                  <motion.span
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    className="relative z-10 truncate"
-                  >
-                    {label}
-                  </motion.span>
-                )}
-              </AnimatePresence>
-              {!open && (
-                <div className="absolute left-full ml-2 px-2 py-1 bg-[#253035] text-[#C9C0B9] text-xs rounded-md shadow-md border border-white/10 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50">
-                  {label}
-                </div>
-              )}
-            </NavLink>
-          )
-        })}
-      </nav>
+      {/* Nav Items with GooeyNav */}
+      <div className="flex-1 px-2 py-3 mt-4 overflow-x-hidden overflow-y-auto scrollbar-hide">
+        <GooeyNav items={navItems} sidebarOpen={open} />
+      </div>
 
       {/* Version */}
       <AnimatePresence>
