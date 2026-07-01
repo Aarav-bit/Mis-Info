@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { Search, Bookmark, BookmarkCheck, Clock, ArrowRight, FolderKanban } from 'lucide-react'
@@ -16,27 +16,38 @@ export function HistoryPage() {
   const [categoryFilter, setCategoryFilter] = useState<string>('all')
 
   // Get unique topics for category filter
-  const topics = ['all', ...Array.from(new Set(reports.map(r => r.topic)))]
+  const topics = useMemo(() => ['all', ...Array.from(new Set(reports.map(r => r.topic)))], [reports])
 
-  const filtered = reports.filter(r => {
-    const matchesSearch = r.claim.toLowerCase().includes(search.toLowerCase()) || r.topic.toLowerCase().includes(search.toLowerCase())
-    const matchesFilter = filter === 'all' || (filter === 'bookmarked' && r.bookmarked)
-    const matchesCategory = categoryFilter === 'all' || r.topic === categoryFilter
-    return matchesSearch && matchesFilter && matchesCategory
-  })
+  const filtered = useMemo(() => {
+    const lowerSearch = search.toLowerCase()
+    return reports.filter(r => {
+      const matchesSearch = r.claim.toLowerCase().includes(lowerSearch) || r.topic.toLowerCase().includes(lowerSearch)
+      const matchesFilter = filter === 'all' || (filter === 'bookmarked' && r.bookmarked)
+      const matchesCategory = categoryFilter === 'all' || r.topic === categoryFilter
+      return matchesSearch && matchesFilter && matchesCategory
+    })
+  }, [reports, search, filter, categoryFilter])
 
   // Large mock counts mapped to show vault data
-  const totalCount = reports.length
-  const trueCount = reports.filter(r => r.trustScore >= 75).length
-  const uncertainCount = reports.filter(r => r.trustScore >= 40 && r.trustScore < 75).length
-  const falseCount = reports.filter(r => r.trustScore < 40).length
+  const stats = useMemo(() => {
+    const totalCount = reports.length
+    let trueCount = 0
+    let uncertainCount = 0
+    let falseCount = 0
 
-  const stats = [
-    { label: 'Total Audits Indexed', value: totalCount, highlight: 'text-white' },
-    { label: 'Verified True Nodes', value: trueCount, highlight: 'text-[#D0FF00]' },
-    { label: 'Uncertain Calibration', value: uncertainCount, highlight: 'text-yellow-400' },
-    { label: 'Exposed Misinformation', value: falseCount, highlight: 'text-red-400' },
-  ]
+    for (const r of reports) {
+      if (r.trustScore >= 75) trueCount++
+      else if (r.trustScore >= 40) uncertainCount++
+      else falseCount++
+    }
+
+    return [
+      { label: 'Total Audits Indexed', value: totalCount, highlight: 'text-white' },
+      { label: 'Verified True Nodes', value: trueCount, highlight: 'text-[#D0FF00]' },
+      { label: 'Uncertain Calibration', value: uncertainCount, highlight: 'text-yellow-400' },
+      { label: 'Exposed Misinformation', value: falseCount, highlight: 'text-red-400' },
+    ]
+  }, [reports])
 
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="max-w-6xl mx-auto space-y-8 py-2">
