@@ -304,15 +304,15 @@ export function LandingPage() {
       {/* Interactive DotField Background */}
       <div style={{ position: 'fixed', inset: 0, pointerEvents: 'none', zIndex: 0 }}>
         <DotField
-          dotRadius={1.2}
-          dotSpacing={16}
-          bulgeStrength={50}
-          glowRadius={200}
+          dotRadius={1.6}
+          dotSpacing={18}
+          bulgeStrength={65}
+          glowRadius={240}
           sparkle={true}
           waveAmplitude={0}
-          gradientFrom="rgba(181, 139, 99, 0.07)" // Copper Accent
-          gradientTo="rgba(61, 77, 85, 0.03)"     // Dark Teal
-          glowColor="#1A1A1A"
+          gradientFrom="rgba(181, 139, 99, 0.32)" // Highly visible copper
+          gradientTo="rgba(61, 77, 85, 0.15)"     // Visible dark teal
+          glowColor="rgba(181, 139, 99, 0.28)"    // Beautiful copper spotlight
         />
       </div>
 
