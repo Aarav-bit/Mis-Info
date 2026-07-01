@@ -272,8 +272,26 @@ export async function queryKnowledgeLayer(
     claimExtracted: best.title,
     evidenceSummary,
     reasoning,
+    recommendation: trustScore >= 75
+      ? 'This information appears credible and can be shared responsibly.'
+      : trustScore >= 50
+      ? 'Exercise caution before sharing. Some evidence is conflicting.'
+      : 'Do not share without further verification from official sources.',
     sources,
     credibilityFactors,
+    scoreBreakdown: { sourceReliability: trustScore, evidenceAgreement: trustScore, semanticMatch: Math.round(best.similarity * 100), linguisticRisk: 70, ruleEngine: 65 },
+    linguisticRiskFlags: [],
+    consensusData: {
+      agreementRatio: sources.filter((s: { supportsClaim: boolean }) => s.supportsClaim).length / Math.max(sources.length, 1),
+      totalSources: sources.length,
+      supportingCount: sources.filter((s: { supportsClaim: boolean }) => s.supportsClaim).length,
+      contradictingCount: sources.filter((s: { supportsClaim: boolean }) => !s.supportsClaim).length,
+      tier1Count: sources.filter((s: { reliability: number }) => s.reliability >= 90).length,
+      tier2Count: sources.filter((s: { reliability: number }) => s.reliability >= 70 && s.reliability < 90).length,
+      tier3Count: sources.filter((s: { reliability: number }) => s.reliability < 70).length,
+      conflictDetected: false,
+      manualReviewFlag: false,
+    },
     createdAt: new Date().toISOString(),
     bookmarked: false,
     topic: 'General',

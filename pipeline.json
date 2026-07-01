@@ -1,0 +1,184 @@
+{
+  "pipelineName": "Mis-Info 5-Stage Verification Pipeline",
+  "overview": "A full-stage verification pipeline designed to scan, pre-process, analyze, retrieve external evidence, and evaluate digital content (text, URLs, and screenshots) to calculate a calibrated trust score.",
+  "stages": [
+    {
+      "step": 1,
+      "name": "Claim Extraction",
+      "file": "src/lib/claimExtractor.ts",
+      "primaryFunctions": [
+        "extractClaim",
+        "cleanText",
+        "normalizeText",
+        "detectClaimType",
+        "extractEntities"
+      ],
+      "description": "Pre-processes raw user input BEFORE any API calls are made. It normalizes text, strips noise, extracts key entities, and categorizes the claim type.",
+      "keyOperations": [
+        "Strips HTML tags",
+        "Removes emojis and symbols using regex Unicode blocks",
+        "Strips forwarded message prefixes (e.g. Fwd:, share this:, breaking:, must read:)",
+        "Normalizes punctuation clutter (e.g. !!!!! becomes !)",
+        "Standardizes currency spacing (e.g. ₹ 50,000 becomes ₹50000)",
+        "Detects claim type (factual, opinion, question, or spam) based on linguistic markers and patterns",
+        "Extracts entities such as dates, currency amounts, and proper nouns"
+      ],
+      "input": "Raw text, URL, or screenshot content",
+      "output": "Structured ExtractedClaim object"
+    },
+    {
+      "step": 2,
+      "name": "Linguistic Risk Analysis",
+      "file": "src/lib/linguisticRisk.ts",
+      "primaryFunctions": [
+        "analyzeLinguisticRisk",
+        "matchTerms"
+      ],
+      "description": "Analyzes the normalized text for psychological manipulation tactics, Clickbait, urgency framing, and other stylistic markers common in misinformation.",
+      "keyOperations": [
+        "Scans for Urgency signals (e.g. 'forward immediately', 'act now')",
+        "Scans for Emotional Manipulation (e.g. 'shocking', 'mind blowing', 'unbelievable')",
+        "Scans for Conspiracy / Distrust signals (e.g. 'they dont want you to know', 'wake up')",
+        "Scans for Scam patterns (e.g. 'free cash', 'claim your prize', 'guaranteed income')",
+        "Scans for Excessive Certainty phrases (e.g. '100% proven', 'undeniable proof')",
+        "Scans for Clickbait framing (e.g. 'what happened next', 'one weird trick')",
+        "Penalizes excessive capitalization and punctuation abuse",
+        "Applies trust bonuses (reduces penalties) if reputable citations are present (e.g. 'according to', 'research shows')"
+      ],
+      "input": "Normalized text from Step 1",
+      "output": "LinguisticRiskResult containing safety score (0-100), risk level, and matched signals"
+    },
+    {
+      "step": 3,
+      "name": "Parallel Evidence & Knowledge Retrieval",
+      "files": [
+        "src/lib/evidenceRetrieval.ts",
+        "src/lib/knowledgeRetrieval.ts"
+      ],
+      "primaryFunctions": [
+        "queryEvidenceEngine",
+        "queryKnowledgeLayer",
+        "queryGoogleFactCheck",
+        "queryGDELT",
+        "queryWikipedia",
+        "queryWikidata",
+        "queryOpenLibrary"
+      ],
+      "description": "Retrieves external corroborating or debunking evidence in parallel. Targets both recent breaking news (Evidence Engine) and established structured facts (Knowledge Layer).",
+      "keyOperations": [
+        "Queries Google Fact Check Tools API for prior fact-checker ratings",
+        "Queries GDELT Project News API for real-time news coverage within a 6-month window",
+        "Queries Wikipedia REST API for background encyclopedic summaries",
+        "Queries Wikidata Entity Search for structured entities and statements",
+        "Queries Open Library API for bibliographic / book catalog records",
+        "Calculates token-based semantic similarity using the Jaccard index"
+      ],
+      "input": "Normalized claim from Step 1",
+      "output": "Independent evidence/knowledge reports with sources, reliability scores, and similarity values"
+    },
+    {
+      "step": 4,
+      "name": "Consensus Engine",
+      "file": "src/lib/consensusEngine.ts",
+      "primaryFunctions": [
+        "analyzeConsensus",
+        "getSourceTier"
+      ],
+      "description": "Aggregates retrieved sources and assesses cross-source consensus. Determines whether sources agree, conflict, or if there is insufficient evidence.",
+      "keyOperations": [
+        "Tiers sources (Tier 1: Government/WHO/Reuters/BBC; Tier 2: Top newspapers/fact-checkers/Wikipedia; Tier 3: Blogs/unrecognized domains)",
+        "Calculates a weighted agreement ratio based on source tiers",
+        "Boosts confidence score if multiple Tier 1/2 sources agree",
+        "Penalizes confidence and flags the claim for manual review if Tier 1 sources directly contradict each other"
+      ],
+      "input": "Collected list of sources from Step 3",
+      "output": "ConsensusResult (verdict, agreement ratio, confidence boost, and manual review flag)"
+    },
+    {
+      "step": 5,
+      "name": "Trust Score Engine",
+      "file": "src/lib/trustScoreEngine.ts",
+      "primaryFunctions": [
+        "computeTrustScore"
+      ],
+      "description": "Calculates the final explainable trust score using a weighted average of all pipeline metrics, applying overrides for special edge cases.",
+      "keyOperations": [
+        "Applies scoring formula: 35% Source Reliability + 25% Evidence Agreement + 20% Semantic Match + 10% Linguistic Risk + 10% Rule Engine",
+        "Resolves mismatches: Knowledge Layer overrides Fact-Check API if fact-checkers debunked a different but related sub-claim",
+        "Overrides score to low trust (max 20) if Step 1 detected spam patterns",
+        "Generates a mathematically traceable, user-friendly explanation of the final trust score"
+      ],
+      "input": "Metrics from Steps 1, 2, 3, and 4",
+      "output": "TrustScoreOutput containing final score, status, confidence, breakdown, and explanation"
+    }
+  ],
+  "scoringFormula": {
+    "equation": "Trust Score = (sourceReliability * 0.35) + (evidenceAgreement * 0.25) + (semanticMatch * 0.20) + (linguisticRisk * 0.10) + (ruleEngine * 0.10)",
+    "weights": {
+      "sourceReliability": 0.35,
+      "evidenceAgreement": 0.25,
+      "semanticMatch": 0.20,
+      "linguisticRisk": 0.10,
+      "ruleEngine": 0.10
+    },
+    "inputsDescription": {
+      "sourceReliability": "0-100: Average reliability score of found sources (e.g. WHO/Reuters = 99, general news = 65-88, web search = 50)",
+      "evidenceAgreement": "0-100: The consensus agreement percentage among supporting vs opposing sources",
+      "semanticMatch": "0-100: The highest Jaccard token-overlap similarity between the query and retrieved source excerpts",
+      "linguisticRisk": "0-100: Linguistic safety score where 100 represents calm/neutral text and low scores indicate high manipulation risk",
+      "ruleEngine": "0-100: Scoring from a local preset rule database matching specific claim keywords"
+    }
+  },
+  "statusThresholds": [
+    {
+      "status": "Verified",
+      "minScore": 80,
+      "maxScore": 100,
+      "color": "green",
+      "badgeClass": "bg-green-500"
+    },
+    {
+      "status": "Likely Credible",
+      "minScore": 65,
+      "maxScore": 79,
+      "color": "blue",
+      "badgeClass": "bg-blue-500"
+    },
+    {
+      "status": "Needs Verification",
+      "minScore": 40,
+      "maxScore": 64,
+      "color": "yellow",
+      "badgeClass": "bg-yellow-500"
+    },
+    {
+      "status": "Likely False",
+      "minScore": 0,
+      "maxScore": 39,
+      "color": "red",
+      "badgeClass": "bg-red-500"
+    }
+  ],
+  "ruleDatabaseExamples": [
+    {
+      "ruleId": "laptop_giveaway",
+      "keywords": {
+        "required": ["government", "free", "laptop"],
+        "optional": ["student", "nationwide", "policy", "announce", "education"],
+        "negation": ["proposal", "plan", "consider", "may", "could"]
+      },
+      "presetScore": 34,
+      "status": "Likely False"
+    },
+    {
+      "ruleId": "dengue_advisory",
+      "keywords": {
+        "required": ["who", "dengue"],
+        "optional": ["advisory", "southeast asia", "health", "fever", "outbreak", "cases", "rise"],
+        "negation": ["fake", "false", "debunk", "hoax"]
+      },
+      "presetScore": 91,
+      "status": "Verified"
+    }
+  ]
+}

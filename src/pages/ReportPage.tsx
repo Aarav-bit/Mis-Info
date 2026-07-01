@@ -3,34 +3,82 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import {
   ArrowLeft, Bookmark, BookmarkCheck, Share2, Download,
-  ChevronDown, ExternalLink, CheckCircle, XCircle, AlertCircle,
-  Minus, Sparkles, Shield, Globe
+  AlertCircle, Sparkles, Shield, Globe, Brain,
+  TrendingUp, AlignLeft, ChevronDown, ChevronUp
 } from 'lucide-react'
 import { useVerification } from '../contexts/VerificationContext'
 import { TrustScoreRing } from '../components/features/TrustScoreRing'
+import { ScoreBreakdownBars } from '../components/features/ScoreBreakdownBars'
+import { SourceCard } from '../components/features/SourceCard'
+import { ExplainabilityPanel } from '../components/features/ExplainabilityPanel'
+import { ConsensusWidget } from '../components/features/ConsensusWidget'
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/Card'
 import { Badge } from '../components/ui/Badge'
 import { Button } from '../components/ui/Button'
-import { Progress } from '../components/ui/Progress'
 import { MOCK_REPORTS } from '../data/mockData'
 import { formatDate } from '../lib/utils'
-import type { Source } from '../types'
+import type { LinguisticRiskFlag } from '../types'
 
-function ReliabilityDot({ score }: { score: number }) {
-  const color = score >= 80 ? 'bg-green-500' : score >= 60 ? 'bg-yellow-500' : 'bg-red-500'
+// ─── Linguistic Risk Section ──────────────────────────────────────────────
+function LinguisticRiskSection({ flags }: { flags: LinguisticRiskFlag[] }) {
+
   return (
-    <div className="flex items-center gap-1.5">
-      <div className={`w-2 h-2 rounded-full ${color}`} />
-      <span className="text-xs font-mono text-[#FEFFFC]">{score}%</span>
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+      {flags.map((flag, i) => {
+        const riskColor = flag.score >= 70 ? '#ef4444' : flag.score >= 45 ? '#f59e0b' : '#22c55e'
+        const riskBg = flag.score >= 70 ? 'rgba(239,68,68,0.08)' : flag.score >= 45 ? 'rgba(245,158,11,0.08)' : 'rgba(34,197,94,0.08)'
+        const riskBorder = flag.score >= 70 ? 'rgba(239,68,68,0.2)' : flag.score >= 45 ? 'rgba(245,158,11,0.2)' : 'rgba(34,197,94,0.2)'
+
+        return (
+          <motion.div
+            key={i}
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: i * 0.07 }}
+            className="rounded-xl border p-3.5 space-y-2"
+            style={{ background: riskBg, borderColor: riskBorder }}
+          >
+            <div className="flex items-center justify-between">
+              <span className="text-[11px] font-mono font-bold text-[#FEFFFC] uppercase tracking-wider">
+                {flag.label}
+              </span>
+              <span className="text-xs font-mono font-bold" style={{ color: riskColor }}>
+                {flag.detected ? '⚠ ' : '✓ '}{flag.score}
+              </span>
+            </div>
+            <div className="h-1 bg-white/5 rounded-full overflow-hidden">
+              <motion.div
+                className="h-full rounded-full"
+                style={{ background: riskColor }}
+                initial={{ width: 0 }}
+                animate={{ width: `${flag.score}%` }}
+                transition={{ delay: 0.3 + i * 0.07, duration: 0.6, ease: 'easeOut' }}
+              />
+            </div>
+            <p className="text-[10px] text-[#8E8A9F] leading-relaxed">{flag.description}</p>
+          </motion.div>
+        )
+      })}
     </div>
   )
 }
 
+// ─── Section Header ──────────────────────────────────────────────────────
+function SectionHeader({ icon, title }: { icon: React.ReactNode; title: string }) {
+  return (
+    <div className="flex items-center gap-2 pb-3 border-b border-white/5 mb-4">
+      <div className="text-[#D0FF00]">{icon}</div>
+      <h2 className="text-xs font-mono font-bold uppercase tracking-wider text-white">{title}</h2>
+    </div>
+  )
+}
+
+// ─── Main Report Page ─────────────────────────────────────────────────────
 export function ReportPage() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const { getReport, toggleBookmark } = useVerification()
-  const [openAccordion, setOpenAccordion] = useState<string | null>('decomp')
+  const [showReasoning, setShowReasoning] = useState(false)
 
   const report = id ? (getReport(id) ?? MOCK_REPORTS.find(r => r.id === id)) : undefined
 
@@ -39,39 +87,37 @@ export function ReportPage() {
       <div className="flex flex-col items-center justify-center min-h-[400px] gap-4 bg-[#141021]/25 border border-white/5 rounded-xl p-8 max-w-md mx-auto mt-12">
         <AlertCircle size={48} className="text-[#8E8A9F]" />
         <p className="text-[#FEFFFC] font-mono text-sm">Report not found</p>
-        <Button onClick={() => navigate('/dashboard')} className="mt-2 font-mono text-xs uppercase tracking-wider">Back to Workspace</Button>
+        <Button onClick={() => navigate('/dashboard')} className="mt-2 font-mono text-xs uppercase tracking-wider">
+          Back to Workspace
+        </Button>
       </div>
     )
   }
 
   const statusVariant = report.trustScore >= 75 ? 'success' : report.trustScore >= 50 ? 'warning' : 'danger'
-  const scoreTextColor = report.trustScore >= 75 ? 'text-green-400' : report.trustScore >= 50 ? 'text-yellow-400' : 'text-red-400'
+  const glowColor = report.trustScore >= 75 ? 'rgba(34,197,94,0.15)' : report.trustScore >= 50 ? 'rgba(234,179,8,0.15)' : 'rgba(239,68,68,0.12)'
+  const glowBorder = report.trustScore >= 75 ? 'rgba(34,197,94,0.25)' : report.trustScore >= 50 ? 'rgba(234,179,8,0.25)' : 'rgba(239,68,68,0.22)'
   const supportingSources = report.sources.filter(s => s.supportsClaim)
   const contradictingSources = report.sources.filter(s => !s.supportsClaim)
 
-  const accordionItems = [
-    { id: 'decomp', title: 'Claim Decomposition', content: report.claimExtracted },
-    { id: 'evidence', title: 'Evidence Corroboration', content: report.evidenceSummary },
-    { id: 'why', title: 'Consensus Calibration', content: `Consensus index of ${report.trustScore}% established via ${report.sources.length} nodes: ${supportingSources.length} supporting and ${contradictingSources.length} contradicting the target assertion.` },
-    { id: 'confidence', title: 'AI Reasoning Path', content: report.reasoning },
-  ]
+  const hasScoreBreakdown = !!report.scoreBreakdown
+  const hasLinguisticFlags = !!(report.linguisticRiskFlags && report.linguisticRiskFlags.length)
+  const hasConsensus = !!report.consensusData
 
   return (
     <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="max-w-5xl mx-auto space-y-6 py-6">
-      
-      {/* Report Toolbars */}
+
+      {/* ── Toolbar ─────────────────────────────────────────────────── */}
       <div className="flex items-center justify-between border-b border-white/5 pb-4">
-        <div className="flex items-center gap-2">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => navigate(-1)}
-            leftIcon={<ArrowLeft size={16} />}
-            className="text-[#8E8A9F] hover:text-white font-mono text-xs uppercase tracking-wider"
-          >
-            Return
-          </Button>
-        </div>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => navigate(-1)}
+          leftIcon={<ArrowLeft size={16} />}
+          className="text-[#8E8A9F] hover:text-white font-mono text-xs uppercase tracking-wider"
+        >
+          Return
+        </Button>
         <div className="flex gap-2">
           <Button
             variant="outline"
@@ -80,186 +126,257 @@ export function ReportPage() {
             leftIcon={report.bookmarked ? <BookmarkCheck size={14} className="text-[#D0FF00]" /> : <Bookmark size={14} />}
             className="border-white/10 hover:bg-white/5 text-[#8E8A9F] hover:text-[#FEFFFC] font-mono text-xs uppercase tracking-wider"
           >
-            {report.bookmarked ? 'Bookmarked' : 'Bookmark'}
+            {report.bookmarked ? 'Saved' : 'Save'}
           </Button>
           <Button variant="outline" size="sm" leftIcon={<Share2 size={14} />} className="border-white/10 hover:bg-white/5 text-[#8E8A9F] hover:text-[#FEFFFC] font-mono text-xs uppercase tracking-wider">Share</Button>
           <Button variant="outline" size="sm" leftIcon={<Download size={14} />} className="border-white/10 hover:bg-white/5 text-[#8E8A9F] hover:text-[#FEFFFC] font-mono text-xs uppercase tracking-wider">Export</Button>
         </div>
       </div>
 
-      {/* Hero Panel */}
-      <div className="glass rounded-xl border border-white/10 overflow-hidden shadow-2xl relative bg-white/3">
-        <div className="absolute top-0 right-0 w-96 h-96 bg-[#D0FF00]/3 rounded-full blur-[100px] pointer-events-none" />
-        <div className="p-8 space-y-6">
-          <div className="flex flex-wrap items-center justify-between gap-4">
-            <div className="flex flex-wrap gap-2">
-              <span className="text-[10px] font-mono text-[#D0FF00] bg-[#D0FF00]/10 border border-[#D0FF00]/25 px-2.5 py-1 rounded">
-                AUDIT REPORT ID-{report.id.substring(0, 6).toUpperCase()}
-              </span>
-              <Badge variant={statusVariant} className="font-mono text-[9px] uppercase tracking-wider px-2 py-0.5">{report.status}</Badge>
-              <Badge variant="outline" className="border-white/10 text-xs font-mono text-[#8E8A9F] uppercase">{report.topic}</Badge>
-            </div>
-            <span className="text-xs font-mono text-[#8E8A9F]">
-              AUDITED: {formatDate(report.createdAt)}
+      {/* ── 1. Hero Report Card ──────────────────────────────────────── */}
+      <div
+        className="rounded-2xl border p-6 relative overflow-hidden"
+        style={{ background: glowColor, borderColor: glowBorder }}
+      >
+        <div className="absolute top-0 right-0 w-64 h-64 rounded-full blur-[80px] pointer-events-none" style={{ background: glowColor }} />
+        <div className="relative">
+          <div className="flex flex-wrap items-center gap-2 mb-4">
+            <span className="text-[10px] font-mono text-[#D0FF00] bg-[#D0FF00]/10 border border-[#D0FF00]/25 px-2.5 py-1 rounded">
+              REPORT ID-{report.id.substring(0, 6).toUpperCase()}
+            </span>
+            <Badge variant={statusVariant} className="font-mono text-[9px] uppercase tracking-wider px-2 py-0.5">{report.status}</Badge>
+            <Badge variant="outline" className="border-white/10 text-xs font-mono text-[#8E8A9F] uppercase">{report.topic}</Badge>
+            <span className="text-xs font-mono text-[#8E8A9F] ml-auto">
+              {formatDate(report.createdAt)}
             </span>
           </div>
-
-          <h2 className="text-xl md:text-2xl font-display font-bold text-white leading-snug">
+          <h1 className="text-xl md:text-2xl font-display font-bold text-white leading-snug mb-3">
             &ldquo;{report.claim}&rdquo;
-          </h2>
-
+          </h1>
           <p className="text-sm text-[#8E8A9F] leading-relaxed border-l-2 border-[#D0FF00]/30 pl-4 py-1">
             {report.summary}
           </p>
         </div>
       </div>
 
-      {/* Middle Grid: Confidence Center & Semantic Auditor Accordion */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
-        
-        {/* Left Side: Confidence Center */}
-        <div className="lg:col-span-5">
-          <Card className="border-white/10 bg-[#141021]/40 backdrop-blur-md h-full flex flex-col items-center justify-center p-8 text-center space-y-6">
-            <div className="relative">
-              {/* Backlight halo effect */}
-              <div className="absolute inset-0 bg-[#D0FF00]/8 rounded-full blur-2xl pointer-events-none" />
-              <TrustScoreRing score={report.trustScore} size={180} />
+      {/* ── 2. Trust Score + Score Breakdown ────────────────────────── */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+        {/* Trust Score Card */}
+        <Card className="lg:col-span-4 border-white/10 bg-[#141021]/40 backdrop-blur-md flex flex-col items-center justify-center p-8 text-center space-y-4">
+          <div className="relative">
+            <div className="absolute inset-0 rounded-full blur-2xl pointer-events-none" style={{ background: glowColor }} />
+            <TrustScoreRing score={report.trustScore} size={160} />
+          </div>
+          <div className="space-y-2">
+            <div className="flex items-center justify-center gap-2">
+              <span className="text-xs font-mono uppercase tracking-widest text-[#D0FF00]">Confidence</span>
+              <span className="text-sm font-bold font-mono text-white">{report.confidence}%</span>
             </div>
+            <p className="text-[10px] text-[#8E8A9F] font-mono uppercase tracking-wider max-w-xs">
+              Verification Status: <span className="text-white font-semibold">{report.status}</span>
+            </p>
+          </div>
+        </Card>
 
-            <div className="space-y-2">
-              <h3 className="text-sm font-mono uppercase tracking-widest text-[#D0FF00]">VERDICT VALIDATION STAMP</h3>
-              <p className="text-xs text-[#8E8A9F] max-w-xs font-mono uppercase tracking-wider">
-                This claim exhibits <span className={scoreTextColor}>{report.trustScore}% trust rating</span> across corroborative network index checks.
-              </p>
-            </div>
-          </Card>
-        </div>
-
-        {/* Right Side: Accordion & Credibility Factors */}
-        <div className="lg:col-span-7 space-y-6">
-          <Card className="border-white/10 bg-[#141021]/40 backdrop-blur-md">
-            <CardHeader className="border-b border-white/5">
-              <CardTitle className="text-white flex items-center gap-2 font-display text-sm">
-                <Shield size={14} className="text-[#D0FF00]" />
-                Semantic Auditor Analysis
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="p-0 divide-y divide-white/5">
-              {accordionItems.map((item) => (
-                <div key={item.id}>
-                  <button
-                    onClick={() => setOpenAccordion(openAccordion === item.id ? null : item.id)}
-                    className="w-full flex items-center justify-between px-6 py-4 text-left hover:bg-white/5 transition-colors"
-                  >
-                    <span className="font-semibold text-xs font-mono uppercase tracking-wider text-[#FEFFFC]">
-                      {item.title}
-                    </span>
-                    <ChevronDown
-                      size={14}
-                      className={`text-[#8E8A9F] transition-transform ${openAccordion === item.id ? 'rotate-180' : ''}`}
-                    />
-                  </button>
-                  {openAccordion === item.id && (
-                    <motion.div
-                      initial={{ height: 0, opacity: 0 }}
-                      animate={{ height: 'auto', opacity: 1 }}
-                      className="px-6 pb-4"
-                    >
-                      <p className="text-xs font-mono text-[#8E8A9F] leading-relaxed whitespace-pre-line">{item.content}</p>
-                    </motion.div>
-                  )}
-                </div>
-              ))}
-            </CardContent>
-          </Card>
-        </div>
-
+        {/* Score Breakdown */}
+        <Card className="lg:col-span-8 border-white/10 bg-[#141021]/40 backdrop-blur-md">
+          <CardHeader className="border-b border-white/5">
+            <CardTitle className="text-white flex items-center gap-2 font-display text-sm">
+              <TrendingUp size={14} className="text-[#D0FF00]" />
+              Weighted Trust Score Breakdown
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="p-6">
+            {hasScoreBreakdown ? (
+              <ScoreBreakdownBars breakdown={report.scoreBreakdown} />
+            ) : (
+              <p className="text-xs font-mono text-[#8E8A9F]">Score breakdown not available for this report.</p>
+            )}
+          </CardContent>
+        </Card>
       </div>
 
-      {/* Credibility progress bars */}
+      {/* ── 3. Claim Summary + Evidence Summary ─────────────────────── */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <Card className="border-white/10 bg-[#141021]/40 backdrop-blur-md">
+          <CardHeader className="border-b border-white/5">
+            <CardTitle className="text-white flex items-center gap-2 font-display text-sm">
+              <AlignLeft size={14} className="text-[#D0FF00]" />
+              Claim Summary
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="p-5">
+            <p className="text-[11px] font-mono text-[#8E8A9F] leading-relaxed mb-3 uppercase tracking-wider">Extracted Claim</p>
+            <p className="text-sm text-[#FEFFFC] leading-relaxed border-l-2 border-[#D0FF00]/40 pl-3">
+              {report.claimExtracted}
+            </p>
+          </CardContent>
+        </Card>
+        <Card className="border-white/10 bg-[#141021]/40 backdrop-blur-md">
+          <CardHeader className="border-b border-white/5">
+            <CardTitle className="text-white flex items-center gap-2 font-display text-sm">
+              <Globe size={14} className="text-[#D0FF00]" />
+              Evidence Summary
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="p-5">
+            <p className="text-[11px] font-mono text-[#8E8A9F] leading-relaxed mb-3 uppercase tracking-wider">Retrieved Evidence</p>
+            <p className="text-sm text-[#FEFFFC] leading-relaxed border-l-2 border-[#8116E0]/40 pl-3">
+              {report.evidenceSummary}
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* ── 4. Supporting Sources ────────────────────────────────────── */}
+      {supportingSources.length > 0 && (
+        <Card className="border-white/10 bg-[#141021]/40 backdrop-blur-md">
+          <CardHeader className="border-b border-white/5">
+            <CardTitle className="text-white flex items-center gap-2 font-display text-sm">
+              <Shield size={14} className="text-green-400" />
+              Supporting Sources
+              <span className="ml-auto text-[10px] font-mono text-green-400 bg-green-500/10 border border-green-500/20 px-2 py-0.5 rounded">
+                {supportingSources.length} found
+              </span>
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="p-5">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              {supportingSources.map((source, i) => (
+                <SourceCard key={source.id} source={source} index={i} />
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* ── 5. Contradicting Sources ─────────────────────────────────── */}
+      {contradictingSources.length > 0 && (
+        <Card className="border-white/10 bg-[#141021]/40 backdrop-blur-md">
+          <CardHeader className="border-b border-white/5">
+            <CardTitle className="text-white flex items-center gap-2 font-display text-sm">
+              <AlertCircle size={14} className="text-red-400" />
+              Contradicting Sources
+              <span className="ml-auto text-[10px] font-mono text-red-400 bg-red-500/10 border border-red-500/20 px-2 py-0.5 rounded">
+                {contradictingSources.length} found
+              </span>
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="p-5">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              {contradictingSources.map((source, i) => (
+                <SourceCard key={source.id} source={source} index={i} />
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* ── 6. Consensus + Linguistic Risk ──────────────────────────── */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+        {/* Consensus Analysis */}
+        {hasConsensus && (
+          <Card className="border-white/10 bg-[#141021]/40 backdrop-blur-md">
+            <CardContent className="p-5">
+              <ConsensusWidget data={report.consensusData} />
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Semantic Match (from score breakdown) */}
+        <Card className="border-white/10 bg-[#141021]/40 backdrop-blur-md">
+          <CardContent className="p-5">
+            <SectionHeader icon={<Sparkles size={14} />} title="Source Reliability Index" />
+            <div className="space-y-3">
+              {report.credibilityFactors.slice(0, 4).map((factor, i) => {
+                const color = factor.impact === 'positive' ? '#22c55e' : factor.impact === 'negative' ? '#ef4444' : '#f59e0b'
+                return (
+                  <div key={i} className="space-y-1">
+                    <div className="flex justify-between text-[11px] font-mono">
+                      <span className="text-[#FEFFFC] font-semibold uppercase">{factor.name}</span>
+                      <span style={{ color }} className="font-bold">{factor.score}</span>
+                    </div>
+                    <div className="h-1 bg-white/5 rounded-full overflow-hidden">
+                      <motion.div
+                        className="h-full rounded-full"
+                        style={{ background: color }}
+                        initial={{ width: 0 }}
+                        animate={{ width: `${factor.score}%` }}
+                        transition={{ delay: 0.3 + i * 0.1, duration: 0.6, ease: 'easeOut' }}
+                      />
+                    </div>
+                    <p className="text-[10px] text-[#8E8A9F]">{factor.description}</p>
+                  </div>
+                )
+              })}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* ── 7. Linguistic Risk ──────────────────────────────────────── */}
+      {hasLinguisticFlags && (
+        <Card className="border-white/10 bg-[#141021]/40 backdrop-blur-md">
+          <CardHeader className="border-b border-white/5">
+            <CardTitle className="text-white flex items-center gap-2 font-display text-sm">
+              <AlertCircle size={14} className="text-[#f59e0b]" />
+              Linguistic Risk Analysis
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="p-5">
+            <LinguisticRiskSection flags={report.linguisticRiskFlags} />
+          </CardContent>
+        </Card>
+      )}
+
+      {/* ── 8. Explainability Panel ─────────────────────────────────── */}
       <Card className="border-white/10 bg-[#141021]/40 backdrop-blur-md">
-        <CardHeader className="border-b border-white/5">
-          <CardTitle className="text-white flex items-center gap-2 font-display text-sm">
-            <Sparkles size={14} className="text-[#D0FF00]" /> Credibility Index Factors
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
-          {report.credibilityFactors.map((factor, i) => {
-            const scoreColorClass = factor.score >= 75 ? 'text-green-400' : factor.score >= 50 ? 'text-yellow-400' : 'text-red-400'
-            const barBgClass = factor.score >= 75 ? 'bg-green-500' : factor.score >= 50 ? 'bg-yellow-500' : 'bg-red-500'
-            return (
-              <div key={i} className="space-y-1.5 border border-white/5 rounded-lg p-4 bg-black/10">
-                <div className="flex justify-between items-center text-xs font-mono">
-                  <span className="text-white uppercase font-bold">{factor.name}</span>
-                  <span className={scoreColorClass}>{factor.score}/100</span>
-                </div>
-                <Progress value={factor.score} size="sm" barClassName={barBgClass} className="bg-white/5" />
-                <p className="text-[11px] text-[#8E8A9F] leading-normal pt-1">{factor.description}</p>
-              </div>
-            )
-          })}
+        <CardContent className="p-5">
+          <ExplainabilityPanel report={report} />
         </CardContent>
       </Card>
 
-      {/* Source Reference Grid */}
-      <Card className="border-white/10 bg-[#141021]/40 backdrop-blur-md">
-        <CardHeader className="border-b border-white/5">
+      {/* ── 9. AI Explanation ───────────────────────────────────────── */}
+      <Card className="border border-[#8116E0]/25 bg-[#141021]/40 backdrop-blur-md relative overflow-hidden">
+        <div className="absolute inset-0 bg-[#8116E0]/4 pointer-events-none" />
+        <CardHeader className="border-b border-white/5 relative">
           <CardTitle className="text-white flex items-center gap-2 font-display text-sm">
-            <Globe size={14} className="text-[#D0FF00]" /> Source Reference Grid
+            <Brain size={14} className="text-[#c084fc]" />
+            AI Reasoning Path
           </CardTitle>
         </CardHeader>
-        <CardContent className="p-0">
-          <div className="overflow-x-auto">
-            <table className="w-full border-collapse">
-              <thead>
-                <tr className="border-b border-white/5 bg-white/5 text-[9px] font-mono text-[#8E8A9F] uppercase tracking-widest">
-                  <th className="text-left px-6 py-4 font-semibold">Audited Source</th>
-                  <th className="text-left px-4 py-4 font-semibold">Reliability</th>
-                  <th className="text-left px-4 py-4 font-semibold">Alignment</th>
-                  <th className="text-left px-4 py-4 font-semibold">Category</th>
-                  <th className="text-left px-6 py-4 font-semibold">Date Logged</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-white/5 text-xs font-mono text-[#FEFFFC]">
-                {report.sources.map((source: Source) => (
-                  <tr key={source.id} className="hover:bg-white/5 transition-colors group">
-                    <td className="px-6 py-4 max-w-sm">
-                      <div className="space-y-1">
-                        <div className="flex items-center gap-2">
-                          <span className="font-semibold text-white group-hover:text-[#D0FF00] transition-colors">{source.name}</span>
-                          <a
-                            href={source.url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-[#8E8A9F] hover:text-white"
-                          >
-                            <ExternalLink size={12} />
-                          </a>
-                        </div>
-                        <p className="text-[11px] text-[#8E8A9F] line-clamp-1 leading-normal">{source.excerpt}</p>
-                      </div>
-                    </td>
-                    <td className="px-4 py-4"><ReliabilityDot score={source.reliability} /></td>
-                    <td className="px-4 py-4">
-                      {source.supportsClaim ? (
-                        <span className="text-green-400 bg-green-500/10 border border-green-500/20 px-2 py-0.5 rounded text-[10px] uppercase font-bold">SUPPORTS</span>
-                      ) : (
-                        <span className="text-red-400 bg-red-500/10 border border-red-500/20 px-2 py-0.5 rounded text-[10px] uppercase font-bold">CONTRADICTS</span>
-                      )}
-                    </td>
-                    <td className="px-4 py-4">
-                      <span className="text-[10px] text-[#8E8A9F] uppercase">{source.category}</span>
-                    </td>
-                    <td className="px-6 py-4 text-[#8E8A9F]">
-                      {new Date(source.publishedAt).toLocaleDateString()}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+        <CardContent className="p-5 relative">
+          <div className="flex items-center justify-between mb-3">
+            <p className="text-[10px] font-mono text-[#8E8A9F] uppercase tracking-wider">
+              Full reasoning chain — {report.confidence}% confidence
+            </p>
+            <button
+              onClick={() => setShowReasoning(v => !v)}
+              className="flex items-center gap-1 text-[10px] font-mono text-[#8E8A9F] hover:text-white transition-colors"
+            >
+              {showReasoning ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
+              {showReasoning ? 'Collapse' : 'Expand'}
+            </button>
           </div>
+
+          {/* Collapsed preview */}
+          <p className={`text-sm text-[#FEFFFC] leading-relaxed font-mono ${!showReasoning ? 'line-clamp-3' : ''}`}>
+            {report.reasoning}
+          </p>
+
+          {!showReasoning && (
+            <button
+              onClick={() => setShowReasoning(true)}
+              className="mt-2 text-[10px] font-mono text-[#8116E0] hover:text-[#c084fc] transition-colors"
+            >
+              Read full reasoning →
+            </button>
+          )}
         </CardContent>
       </Card>
+
     </motion.div>
   )
 }

@@ -9,6 +9,7 @@ export interface Source {
   publishedAt: string
   category: string
   excerpt: string
+  tier?: 1 | 2 | 3
 }
 
 export interface CredibilityFactor {
@@ -26,6 +27,25 @@ export interface ScoreBreakdown {
   ruleEngine: number           // 0-100, weighted 10%
 }
 
+export interface LinguisticRiskFlag {
+  label: string
+  score: number        // 0-100, higher = more risky
+  detected: boolean
+  description: string
+}
+
+export interface ConsensusData {
+  agreementRatio: number      // 0-1
+  totalSources: number
+  supportingCount: number
+  contradictingCount: number
+  tier1Count: number
+  tier2Count: number
+  tier3Count: number
+  conflictDetected: boolean
+  manualReviewFlag: boolean
+}
+
 export interface VerificationReport {
   id: string
   claim: string
@@ -37,9 +57,12 @@ export interface VerificationReport {
   claimExtracted: string
   evidenceSummary: string
   reasoning: string
+  recommendation: string
   sources: Source[]
   credibilityFactors: CredibilityFactor[]
-  scoreBreakdown?: ScoreBreakdown
+  scoreBreakdown: ScoreBreakdown
+  linguisticRiskFlags: LinguisticRiskFlag[]
+  consensusData: ConsensusData
   createdAt: string
   bookmarked: boolean
   topic: string

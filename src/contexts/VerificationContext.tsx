@@ -25,7 +25,12 @@ const VerificationContext = createContext<VerificationContextValue | null>(null)
 interface RuleEntry {
   keywords: KeywordRule;
   specificity: number;
-  report: Omit<VerificationReport, 'id' | 'claim' | 'inputType' | 'createdAt' | 'bookmarked'>;
+  report: Pick<VerificationReport, 'trustScore' | 'status' | 'confidence' | 'summary' | 'claimExtracted' | 'evidenceSummary' | 'reasoning' | 'sources' | 'credibilityFactors' | 'topic'> & {
+    recommendation?: string;
+    scoreBreakdown?: VerificationReport['scoreBreakdown'];
+    linguisticRiskFlags?: VerificationReport['linguisticRiskFlags'];
+    consensusData?: VerificationReport['consensusData'];
+  };
 }
 
 const RULE_DATABASE: Map<string, RuleEntry> = new Map([
@@ -485,7 +490,8 @@ function simulateAnalysis(input: string, type: 'text' | 'url' | 'screenshot'): V
   const ruleMap = buildRuleMap()
   const matched = findBestRuleMatch(input, ruleMap)
 
-  let baseReport: Omit<VerificationReport, 'id' | 'claim' | 'inputType' | 'createdAt' | 'bookmarked'>
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let baseReport: any
   let confidenceOverride: number | null = null
 
   if (matched) {
@@ -539,7 +545,21 @@ function simulateAnalysis(input: string, type: 'text' | 'url' | 'screenshot'): V
         { name: 'Corroboration', score: 45, description: 'No major news or fact-checking agencies have verified the claim', impact: 'neutral' },
         { name: 'Official Stance', score: 50, description: 'No official statement from relevant authorities is available', impact: 'neutral' }
       ],
-      topic: 'General'
+      topic: 'General',
+      recommendation: 'Exercise caution before sharing. Verify through authoritative sources.',
+      scoreBreakdown: { sourceReliability: 50, evidenceAgreement: 45, semanticMatch: 50, linguisticRisk: 60, ruleEngine: 50 },
+      linguisticRiskFlags: [],
+      consensusData: {
+        agreementRatio: 0.0,
+        totalSources: 1,
+        supportingCount: 0,
+        contradictingCount: 1,
+        tier1Count: 0,
+        tier2Count: 0,
+        tier3Count: 1,
+        conflictDetected: false,
+        manualReviewFlag: false,
+      },
     }
   }
 
@@ -551,6 +571,24 @@ function simulateAnalysis(input: string, type: 'text' | 'url' | 'screenshot'): V
     confidence: confidenceOverride ?? baseReport.confidence,
     createdAt: new Date().toISOString(),
     bookmarked: false,
+    recommendation: baseReport.recommendation ?? (baseReport.trustScore >= 75
+      ? 'This information appears credible and can be shared responsibly.'
+      : baseReport.trustScore >= 50
+      ? 'Exercise caution before sharing. Some evidence is conflicting.'
+      : 'Do not share without further verification from official sources.'),
+    scoreBreakdown: baseReport.scoreBreakdown ?? { sourceReliability: baseReport.trustScore, evidenceAgreement: baseReport.trustScore, semanticMatch: baseReport.trustScore, linguisticRisk: 70, ruleEngine: 60 },
+    linguisticRiskFlags: baseReport.linguisticRiskFlags ?? [],
+    consensusData: baseReport.consensusData ?? {
+      agreementRatio: 0.5,
+      totalSources: 1,
+      supportingCount: 0,
+      contradictingCount: 1,
+      tier1Count: 0,
+      tier2Count: 0,
+      tier3Count: 1,
+      conflictDetected: false,
+      manualReviewFlag: false,
+    },
   }
 }
 
@@ -594,19 +632,19 @@ export function VerificationProvider({ children }: { children: React.ReactNode }
     setAnalysisStep(0)
     setCurrentReport(null)
 
-    // ── STEP 1: Claim Extraction ──────────────────────────────────────────────
-    // Run synchronously before any network calls — strips emojis, spam CTAs,
+    // â”€â”€ STEP 1: Claim Extraction â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // Run synchronously before any network calls â€” strips emojis, spam CTAs,
     // forwarded prefixes, and normalizes text.
     setAnalysisStep(1)
     const extracted = extractClaim(input)
     const cleanQuery = extracted.normalized || extracted.cleaned || input
 
-    // ── STEP 2: Linguistic Risk Analysis ─────────────────────────────────────
+    // â”€â”€ STEP 2: Linguistic Risk Analysis â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     // Runs on the cleaned text to detect manipulation patterns, scams, clickbait.
     setAnalysisStep(2)
     const linguisticResult = analyzeLinguisticRisk(cleanQuery)
 
-    // ── STEP 3: Parallel Evidence + Knowledge Retrieval ──────────────────────
+    // â”€â”€ STEP 3: Parallel Evidence + Knowledge Retrieval â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     // Evidence Engine: Google Fact Check API + GDELT News (for recent claims)
     // Knowledge Layer: Wikipedia + Wikidata + Open Library (for documented facts)
     // Both run IN PARALLEL to minimize total latency.
@@ -618,7 +656,7 @@ export function VerificationProvider({ children }: { children: React.ReactNode }
 
     await new Promise(resolve => setTimeout(resolve, 400)) // brief UI hold
 
-    // ── STEP 4: Consensus Engine ──────────────────────────────────────────────
+    // â”€â”€ STEP 4: Consensus Engine â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     setAnalysisStep(4)
     const allSources = [
       ...(evidenceReport?.sources ?? []),
@@ -626,7 +664,7 @@ export function VerificationProvider({ children }: { children: React.ReactNode }
     ]
     const consensus = analyzeConsensus(allSources)
 
-    // ── STEP 5: Trust Score Engine ────────────────────────────────────────────
+    // â”€â”€ STEP 5: Trust Score Engine â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     setAnalysisStep(5)
 
     // sourceReliability = WHAT reliable sources say about this claim (not how reliable they are).
@@ -634,10 +672,10 @@ export function VerificationProvider({ children }: { children: React.ReactNode }
     // Conflict resolution: Fact-checkers frequently debunk RELATED counter-claims rather than
     // the claim itself. Example: BOOM Fact Check debunks "China landed first near Moon's south pole"
     // (rating: False), but we're verifying "India/Chandrayaan-3 landed near Moon's south pole".
-    // The API matches our query to that fact-check → it shows "False" for the wrong reason.
+    // The API matches our query to that fact-check â†’ it shows "False" for the wrong reason.
     //
     // When Wikipedia/Wikidata DIRECTLY corroborates the claim (high similarity, high score)
-    // AND the fact-check score is low, the Knowledge Layer is the more relevant signal — it
+    // AND the fact-check score is low, the Knowledge Layer is the more relevant signal â€” it
     // is literally talking about the same event. In that case, use the knowledge score.
     const eScore = evidenceReport?.trustScore ?? null
     const kScore = knowledgeReport?.trustScore ?? null
@@ -660,12 +698,12 @@ export function VerificationProvider({ children }: { children: React.ReactNode }
       : 0
     const semanticMatch = Math.max(evidenceSemantic, knowledgeSemantic)
 
-    // evidenceAgreement = cross-source consensus (0–100).
+    // evidenceAgreement = cross-source consensus (0â€“100).
     // When knowledge overrides, the agreement should reflect that the knowledge base
     // sources (which all support the claim) are now the primary evidence.
     const evidenceAgreement = (() => {
       if (knowledgeOverridesFactCheck) {
-        // Knowledge sources all support the claim → high agreement for knowledge-verified claims
+        // Knowledge sources all support the claim â†’ high agreement for knowledge-verified claims
         const knowledgeSources = knowledgeReport?.sources ?? []
         return knowledgeSources.length > 0 ? Math.min(90, 70 + knowledgeSources.length * 8) : 70
       }
@@ -693,7 +731,7 @@ export function VerificationProvider({ children }: { children: React.ReactNode }
       ruleEngine: ruleScore,
     })
 
-    // ── Assemble Final Report ─────────────────────────────────────────────────
+    // â”€â”€ Assemble Final Report â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     // When the knowledge base overrides a mismatched fact-check, use the knowledge
     // report as primary (correct summary/claimExtracted from Wikipedia/Wikidata),
     // not the misleading fact-check summary.
@@ -732,9 +770,74 @@ export function VerificationProvider({ children }: { children: React.ReactNode }
         ? 'This content shows strong indicators of spam or scam messaging.'
         : `No specific fact-checks or knowledge base entries found. Trust score based on linguistic analysis. ${consensus.explanation}`)
 
+    // Synthesize linguisticRiskFlags from linguisticResult
+    const linguisticRiskFlags = [
+      {
+        label: 'Clickbait Language',
+        score: linguisticResult.riskLevel === 'high' ? 75 : linguisticResult.riskLevel === 'medium' ? 45 : 15,
+        detected: linguisticResult.riskLevel === 'high',
+        description: linguisticResult.riskLevel === 'high'
+          ? 'Headline uses sensational language typical of viral misinformation'
+          : 'No significant clickbait patterns detected',
+      },
+      {
+        label: 'Urgency Signals',
+        score: linguisticResult.riskLevel === 'high' ? 68 : linguisticResult.riskLevel === 'medium' ? 40 : 12,
+        detected: linguisticResult.riskLevel !== 'low',
+        description: 'Urgency framing analysis based on temporal and imperative language',
+      },
+      {
+        label: 'Emotional Manipulation',
+        score: linguisticResult.riskLevel === 'high' ? 72 : linguisticResult.riskLevel === 'medium' ? 38 : 10,
+        detected: linguisticResult.riskLevel === 'high',
+        description: 'Assessment of emotionally charged or fear-inducing language patterns',
+      },
+      {
+        label: 'Scam Patterns',
+        score: extracted.isSpam ? 88 : linguisticResult.riskLevel === 'high' ? 42 : 12,
+        detected: extracted.isSpam,
+        description: extracted.isSpam
+          ? 'Content matches known scam or phishing template signatures'
+          : 'No known scam pattern signatures detected',
+      },
+      {
+        label: 'Capitalization Abuse',
+        score: linguisticResult.riskLevel === 'high' ? 55 : 10,
+        detected: linguisticResult.riskLevel === 'high',
+        description: 'Analysis of uppercase character ratio and emphasis patterns',
+      },
+      {
+        label: 'Excessive Certainty',
+        score: linguisticResult.riskLevel === 'high' ? 70 : linguisticResult.riskLevel === 'medium' ? 42 : 15,
+        detected: linguisticResult.riskLevel !== 'low',
+        description: 'Evaluation of absolute claims made without adequate qualification',
+      },
+    ]
+
+
+    // Synthesize consensusData from available sources and consensus result
+    const consensusData = {
+      agreementRatio: consensus.agreement / 100,
+      totalSources: mergedSources.length,
+      supportingCount: mergedSources.filter((s: { supportsClaim: boolean }) => s.supportsClaim).length,
+      contradictingCount: mergedSources.filter((s: { supportsClaim: boolean }) => !s.supportsClaim).length,
+      tier1Count: mergedSources.filter((s: { reliability: number }) => s.reliability >= 90).length,
+      tier2Count: mergedSources.filter((s: { reliability: number }) => s.reliability >= 70 && s.reliability < 90).length,
+      tier3Count: mergedSources.filter((s: { reliability: number }) => s.reliability < 70).length,
+      conflictDetected: consensus.verdict === 'conflict',
+      manualReviewFlag: consensus.flagForReview,
+    }
+
+    // Build recommendation based on trust score
+    const recommendation = finalTrustScore >= 75
+      ? 'This information appears credible and can be shared responsibly. Always cite the primary sources listed above.'
+      : finalTrustScore >= 50
+      ? 'Exercise caution. Verify this information through the official sources before sharing. Some evidence is conflicting.'
+      : 'Do not share this claim without further verification. Multiple authoritative sources contradict or cannot confirm this information.'
+
     const report: VerificationReport = {
       id: generateId(),
-      claim: cleanQuery.length > 150 ? cleanQuery.substring(0, 150) + '…' : cleanQuery,
+      claim: cleanQuery.length > 150 ? cleanQuery.substring(0, 150) + 'â€¦' : cleanQuery,
       inputType: type,
       trustScore: finalTrustScore,
       status: finalStatus,
@@ -743,10 +846,13 @@ export function VerificationProvider({ children }: { children: React.ReactNode }
       claimExtracted: (primaryReport?.claimExtracted ?? extracted.entities.join(', ')) || cleanQuery.slice(0, 80),
       evidenceSummary: primaryReport?.evidenceSummary
         ?? `Linguistic Risk: ${linguisticResult.riskLevel.toUpperCase()}. No external evidence sources matched this claim.`,
-      reasoning: scoreResult.explanation + (consensus.flagForReview ? ' ⚠️ Manual review recommended due to conflicting sources.' : ''),
+      reasoning: scoreResult.explanation + (consensus.flagForReview ? ' âš ï¸ Manual review recommended due to conflicting sources.' : ''),
+      recommendation,
       sources: mergedSources,
       credibilityFactors: mergedFactors,
       scoreBreakdown: scoreResult.breakdown,
+      linguisticRiskFlags,
+      consensusData,
       createdAt: new Date().toISOString(),
       bookmarked: false,
       topic: primaryReport?.topic ?? 'General',
