@@ -10,7 +10,7 @@ import { Badge } from '../components/ui/Badge'
 import { DAILY_VERIFICATIONS, TOPIC_STATS, SCORE_DISTRIBUTION } from '../data/mockData'
 import { useVerification } from '../contexts/VerificationContext'
 
-const CHART_COLORS = ['#072E33', '#0F969C', '#6DA5C0', '#E6F3F5', '#0C7075']
+const CHART_COLORS = ['#D0FF00', '#8116E0', '#FEFFFC', '#8E8A9F', '#35125E']
 
 
 export function AnalyticsPage() {
@@ -40,16 +40,16 @@ export function AnalyticsPage() {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-white/5 pb-4">
         <div>
           <div className="flex items-center gap-2">
-            <Activity size={14} className="text-[#0F969C]" />
-            <span className="text-[10px] font-mono tracking-widest text-[#0F969C] uppercase">TACTICAL ANALYSIS BOARD</span>
+            <Activity size={14} className="text-[#D0FF00]" />
+            <span className="text-[10px] font-mono tracking-widest text-[#D0FF00] uppercase">TACTICAL ANALYSIS BOARD</span>
           </div>
           <h1 className="text-2xl font-display font-bold text-white tracking-tight mt-1">Credibility Analytics & Trends</h1>
-          <p className="text-[#6DA5C0] text-xs font-mono mt-1 uppercase">Real-time truth verification & network integrity monitoring</p>
+          <p className="text-[#8E8A9F] text-xs font-mono mt-1 uppercase">Real-time truth verification & network integrity monitoring</p>
         </div>
 
         {/* Date Picker Trigger */}
-        <div className="flex items-center gap-2 px-3 py-2 bg-white/5 border border-white/10 rounded font-mono text-xs text-[#6DA5C0] cursor-pointer hover:border-[#0F969C]/40 transition-colors">
-          <Calendar size={13} className="text-[#0F969C]" />
+        <div className="flex items-center gap-2 px-3 py-2 bg-white/5 border border-white/10 rounded font-mono text-xs text-[#8E8A9F] cursor-pointer hover:border-[#D0FF00]/40 transition-colors">
+          <Calendar size={13} className="text-[#D0FF00]" />
           <span>{range}</span>
         </div>
       </div>
@@ -57,14 +57,14 @@ export function AnalyticsPage() {
       {/* HUD Stat Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {hudStats.map((stat, i) => (
-          <Card key={i} className="border border-white/5 bg-[#072e33]/30">
+          <Card key={i} className="border border-white/5 bg-[#141021]/30">
             <CardContent className="p-5">
-              <div className="flex justify-between items-center text-[9px] font-mono text-[#6DA5C0] uppercase tracking-wider mb-2">
+              <div className="flex justify-between items-center text-[9px] font-mono text-[#8E8A9F] uppercase tracking-wider mb-2">
                 <span>{stat.label}</span>
                 <span className={stat.isUp ? 'text-green-400' : 'text-red-400'}>{stat.trend}</span>
               </div>
               <div className="text-2xl font-display font-bold text-white tracking-tight">{stat.value}</div>
-              <div className="text-[9px] font-mono text-[#6DA5C0] mt-2 uppercase tracking-wide opacity-60">
+              <div className="text-[9px] font-mono text-[#8E8A9F] mt-2 uppercase tracking-wide opacity-60">
                 {stat.detail}
               </div>
             </CardContent>
@@ -78,7 +78,7 @@ export function AnalyticsPage() {
         {/* Left Side: Analytical Charts */}
         <div className="lg:col-span-8 space-y-6">
           {/* Chart 1: Daily Verification Volume */}
-          <Card className="border border-white/10 bg-[#072e33]/40 backdrop-blur-md">
+          <Card className="border border-white/10 bg-[#141021]/40 backdrop-blur-md">
             <CardHeader className="border-b border-white/5 pb-4">
               <CardTitle className="text-white font-display text-sm flex items-center gap-2 uppercase tracking-wider font-semibold">
                 Daily Verification Volume
@@ -89,15 +89,15 @@ export function AnalyticsPage() {
                 <AreaChart data={DAILY_VERIFICATIONS}>
                   <defs>
                     <linearGradient id="gCopper" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#0F969C" stopOpacity={0.25} />
-                      <stop offset="95%" stopColor="#0F969C" stopOpacity={0} />
+                      <stop offset="5%" stopColor="#D0FF00" stopOpacity={0.25} />
+                      <stop offset="95%" stopColor="#D0FF00" stopOpacity={0} />
                     </linearGradient>
                   </defs>
                   <CartesianGrid strokeDasharray="2 2" stroke="rgba(255,255,255,0.03)" />
-                  <XAxis dataKey="date" tick={{ fontSize: 10, fill: '#6DA5C0', fontFamily: 'monospace' }} stroke="rgba(255,255,255,0.05)" />
-                  <YAxis tick={{ fontSize: 10, fill: '#6DA5C0', fontFamily: 'monospace' }} stroke="rgba(255,255,255,0.05)" />
-                  <Tooltip contentStyle={{ background: '#072E33', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '6px', fontSize: '11px', color: '#E6F3F5' }} />
-                  <Area type="monotone" dataKey="verified" stroke="#0F969C" fill="url(#gCopper)" strokeWidth={2} name="Audits Run" />
+                  <XAxis dataKey="date" tick={{ fontSize: 10, fill: '#8E8A9F', fontFamily: 'monospace' }} stroke="rgba(255,255,255,0.05)" />
+                  <YAxis tick={{ fontSize: 10, fill: '#8E8A9F', fontFamily: 'monospace' }} stroke="rgba(255,255,255,0.05)" />
+                  <Tooltip contentStyle={{ background: '#141021', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '6px', fontSize: '11px', color: '#FEFFFC' }} />
+                  <Area type="monotone" dataKey="verified" stroke="#D0FF00" fill="url(#gCopper)" strokeWidth={2} name="Audits Run" />
                 </AreaChart>
               </ResponsiveContainer>
             </CardContent>
@@ -107,7 +107,7 @@ export function AnalyticsPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             
             {/* Score Donut */}
-            <Card className="border border-white/10 bg-[#072e33]/40 backdrop-blur-md">
+            <Card className="border border-white/10 bg-[#141021]/40 backdrop-blur-md">
               <CardHeader className="border-b border-white/5 pb-4">
                 <CardTitle className="text-white font-display text-xs uppercase tracking-wider font-semibold">
                   Score Distribution Donut
@@ -130,15 +130,15 @@ export function AnalyticsPage() {
                         <Cell key={index} fill={CHART_COLORS[index % CHART_COLORS.length]} />
                       ))}
                     </Pie>
-                    <Tooltip contentStyle={{ background: '#072E33', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '6px', fontSize: '11px', color: '#E6F3F5' }} />
-                    <Legend formatter={(value) => <span className="text-[10px] font-mono text-[#6DA5C0] uppercase tracking-wider">{value}</span>} />
+                    <Tooltip contentStyle={{ background: '#141021', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '6px', fontSize: '11px', color: '#FEFFFC' }} />
+                    <Legend formatter={(value) => <span className="text-[10px] font-mono text-[#8E8A9F] uppercase tracking-wider">{value}</span>} />
                   </PieChart>
                 </ResponsiveContainer>
               </CardContent>
             </Card>
 
             {/* Horizontal Bar Chart */}
-            <Card className="border border-white/10 bg-[#072e33]/40 backdrop-blur-md">
+            <Card className="border border-white/10 bg-[#141021]/40 backdrop-blur-md">
               <CardHeader className="border-b border-white/5 pb-4">
                 <CardTitle className="text-white font-display text-xs uppercase tracking-wider font-semibold">
                   Topic Volume Map
@@ -148,10 +148,10 @@ export function AnalyticsPage() {
                 <ResponsiveContainer width="100%" height={180}>
                   <BarChart data={TOPIC_STATS} layout="vertical">
                     <CartesianGrid strokeDasharray="2 2" stroke="rgba(255,255,255,0.03)" />
-                    <XAxis type="number" tick={{ fontSize: 10, fill: '#6DA5C0', fontFamily: 'monospace' }} stroke="rgba(255,255,255,0.05)" />
-                    <YAxis dataKey="topic" type="category" width={72} tick={{ fontSize: 10, fill: '#6DA5C0', fontFamily: 'monospace' }} stroke="rgba(255,255,255,0.05)" />
-                    <Tooltip contentStyle={{ background: '#072E33', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '6px', fontSize: '11px', color: '#E6F3F5' }} />
-                    <Bar dataKey="count" fill="#0F969C" radius={[0, 2, 2, 0]} name="Audits" />
+                    <XAxis type="number" tick={{ fontSize: 10, fill: '#8E8A9F', fontFamily: 'monospace' }} stroke="rgba(255,255,255,0.05)" />
+                    <YAxis dataKey="topic" type="category" width={72} tick={{ fontSize: 10, fill: '#8E8A9F', fontFamily: 'monospace' }} stroke="rgba(255,255,255,0.05)" />
+                    <Tooltip contentStyle={{ background: '#141021', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '6px', fontSize: '11px', color: '#FEFFFC' }} />
+                    <Bar dataKey="count" fill="#D0FF00" radius={[0, 2, 2, 0]} name="Audits" />
                   </BarChart>
                 </ResponsiveContainer>
               </CardContent>
@@ -162,7 +162,7 @@ export function AnalyticsPage() {
 
         {/* Right Side: Tactical Activity Logger */}
         <div className="lg:col-span-4 h-full">
-          <Card className="border border-white/10 bg-[#072e33]/40 backdrop-blur-md h-full">
+          <Card className="border border-white/10 bg-[#141021]/40 backdrop-blur-md h-full">
             <CardHeader className="border-b border-white/5 pb-4">
               <CardTitle className="text-white font-display text-sm flex items-center gap-2 uppercase tracking-wider font-semibold">
                 Live Activity Logger
@@ -175,7 +175,7 @@ export function AnalyticsPage() {
                   <div key={idx} className="flex gap-3 items-start text-xs font-mono">
                     <span className={`w-2 h-2 rounded-full mt-1.5 flex-shrink-0 ${nodeColor} animate-pulse`} />
                     <div className="space-y-1 min-w-0">
-                      <div className="text-[10px] text-[#6DA5C0]">{log.time}</div>
+                      <div className="text-[10px] text-[#8E8A9F]">{log.time}</div>
                       <p className="text-white truncate uppercase tracking-wide">{log.label}</p>
                     </div>
                   </div>

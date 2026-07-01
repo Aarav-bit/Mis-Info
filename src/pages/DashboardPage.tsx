@@ -221,12 +221,12 @@ export function DashboardPage() {
       <div className="flex items-center justify-between border-b border-white/5 pb-4">
         <div>
           <div className="flex items-center gap-2">
-            <Cpu size={14} className="text-[#0F969C] animate-pulse" />
-            <span className="text-[10px] font-mono tracking-widest text-[#0F969C] uppercase">TACTICAL AUDITING APERTURE</span>
+            <Cpu size={14} className="text-[#D0FF00] animate-pulse" />
+            <span className="text-[10px] font-mono tracking-widest text-[#D0FF00] uppercase">TACTICAL AUDITING APERTURE</span>
           </div>
           <h1 className="text-2xl font-display font-bold text-white tracking-tight mt-1">Cognitive Verification Console</h1>
         </div>
-        <Badge variant="outline" className="border-[#0F969C]/20 text-[#0F969C] font-mono text-[9px] uppercase tracking-wider px-3 py-1">
+        <Badge variant="outline" className="border-[#D0FF00]/20 text-[#D0FF00] font-mono text-[9px] uppercase tracking-wider px-3 py-1">
           SYSTEM ACTIVE
         </Badge>
       </div>
@@ -247,8 +247,8 @@ export function DashboardPage() {
                     onClick={() => { setActiveTab(tab.id); setInput(''); setError('') }}
                     className={`flex items-center gap-2 px-4 py-2.5 rounded text-xs font-mono uppercase tracking-wider transition-all ${
                       activeTab === tab.id
-                        ? 'bg-[#0F969C] text-black font-semibold'
-                        : 'text-[#6DA5C0] hover:text-[#E6F3F5] hover:bg-white/5'
+                        ? 'bg-[#D0FF00] text-black font-semibold'
+                        : 'text-[#8E8A9F] hover:text-[#FEFFFC] hover:bg-white/5'
                     }`}
                   >
                     {tab.icon}
@@ -274,35 +274,35 @@ export function DashboardPage() {
                 onClick={handleFileSelectClick}
                 className={`border border-dashed rounded-xl p-8 flex flex-col items-center justify-center text-center group transition-all cursor-pointer bg-black/20 ${
                   isDragging
-                    ? 'border-[#0F969C] bg-[#0F969C]/5 scale-[0.99]'
-                    : 'border-[#0F969C]/30 hover:border-[#0F969C]/60'
+                    ? 'border-[#D0FF00] bg-[#D0FF00]/5 scale-[0.99]'
+                    : 'border-[#D0FF00]/30 hover:border-[#D0FF00]/60'
                 }`}
               >
-                <div className="w-12 h-12 rounded-full bg-[#0F969C]/10 border border-[#0F969C]/25 flex items-center justify-center mb-3 group-hover:scale-105 transition-transform">
+                <div className="w-12 h-12 rounded-full bg-[#D0FF00]/10 border border-[#D0FF00]/25 flex items-center justify-center mb-3 group-hover:scale-105 transition-transform">
                   {isFileIngesting ? (
-                    <Loader2 size={18} className="text-[#0F969C] animate-spin" />
+                    <Loader2 size={18} className="text-[#D0FF00] animate-spin" />
                   ) : (
-                    <Upload size={18} className="text-[#0F969C]" />
+                    <Upload size={18} className="text-[#D0FF00]" />
                   )}
                 </div>
                 <span className="text-xs font-mono text-white uppercase tracking-wider">
                   {isFileIngesting ? 'Ingesting data packet...' : 'Drag & drop files to ingest'}
                 </span>
-                <span className="text-[10px] text-[#6DA5C0] font-mono mt-1 uppercase">Supports TXT, PDF, JPEG, PNG</span>
+                <span className="text-[10px] text-[#8E8A9F] font-mono mt-1 uppercase">Supports TXT, PDF, JPEG, PNG</span>
               </div>
 
               {/* Command Bar Input */}
               <div className="space-y-2">
                 <div className="flex items-center gap-2">
-                  <Terminal size={14} className="text-[#0F969C]" />
-                  <span className="text-[10px] font-mono text-[#6DA5C0] uppercase tracking-wider">Audit Command Ingestion</span>
+                  <Terminal size={14} className="text-[#D0FF00]" />
+                  <span className="text-[10px] font-mono text-[#8E8A9F] uppercase tracking-wider">Audit Command Ingestion</span>
                 </div>
                 <textarea
                   value={input}
                   onChange={e => { setInput(e.target.value); setError('') }}
                   placeholder={tabs.find(t => t.id === activeTab)?.placeholder}
                   rows={activeTab === 'url' ? 2 : 4}
-                  className="w-full rounded-xl border border-white/10 bg-black/40 text-[#E6F3F5] px-4 py-3 text-xs font-mono resize-none focus:outline-none focus:ring-1 focus:ring-[#0F969C] placeholder:text-[#6DA5C0]/40 transition-all"
+                  className="w-full rounded-xl border border-white/10 bg-black/40 text-[#FEFFFC] px-4 py-3 text-xs font-mono resize-none focus:outline-none focus:ring-1 focus:ring-[#D0FF00] placeholder:text-[#8E8A9F]/40 transition-all"
                 />
               </div>
 
@@ -315,7 +315,7 @@ export function DashboardPage() {
 
               {/* Submit Row */}
               <div className="flex items-center justify-between pt-4 border-t border-white/5">
-                <span className="text-[10px] font-mono text-[#6DA5C0] uppercase tracking-wider">
+                <span className="text-[10px] font-mono text-[#8E8A9F] uppercase tracking-wider">
                   Ingester ready
                 </span>
                 <Button
@@ -333,15 +333,15 @@ export function DashboardPage() {
 
           {/* Quick suggestions */}
           <div className="space-y-3">
-            <p className="text-[10px] text-[#6DA5C0] font-mono uppercase tracking-widest flex items-center gap-1.5">
-              <Sparkles size={11} className="text-[#0F969C]" /> suggest claim templates:
+            <p className="text-[10px] text-[#8E8A9F] font-mono uppercase tracking-widest flex items-center gap-1.5">
+              <Sparkles size={11} className="text-[#D0FF00]" /> suggest claim templates:
             </p>
             <div className="flex flex-wrap gap-2">
               {EXAMPLE_CLAIMS.map((claim, i) => (
                 <button
                   key={i}
                   onClick={() => { setActiveTab('text'); setInput(claim); setError('') }}
-                  className="text-[11px] font-mono text-[#6DA5C0] px-3.5 py-2 rounded border border-white/5 bg-[#072e33]/30 hover:bg-[#0F969C]/10 hover:border-[#0F969C]/25 transition-all text-left max-w-full truncate"
+                  className="text-[11px] font-mono text-[#8E8A9F] px-3.5 py-2 rounded border border-white/5 bg-[#141021]/30 hover:bg-[#D0FF00]/10 hover:border-[#D0FF00]/25 transition-all text-left max-w-full truncate"
                 >
                   {claim}
                 </button>
@@ -355,7 +355,7 @@ export function DashboardPage() {
           <div className="glass rounded-xl border border-white/10 overflow-hidden shadow-2xl bg-white/3">
             <div className="p-4 border-b border-white/5 bg-white/2">
               <h2 className="text-xs font-mono uppercase tracking-widest text-white flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-[#0F969C] animate-ping" />
+                <span className="w-2 h-2 rounded-full bg-[#D0FF00] animate-ping" />
                 Live Verification Stream
               </h2>
             </div>
@@ -369,7 +369,7 @@ export function DashboardPage() {
                 return (
                   <div key={i} className="p-3 bg-black/20 border border-white/5 rounded-lg space-y-2">
                     <div className="flex justify-between items-center text-[10px] font-mono">
-                      <span className="text-[#6DA5C0] uppercase">{feed.source}</span>
+                      <span className="text-[#8E8A9F] uppercase">{feed.source}</span>
                       <span className={`px-2 py-0.5 rounded font-semibold uppercase tracking-wider ${statusBg} ${statusColor}`}>
                         {feed.score}% {feed.status}
                       </span>
@@ -388,16 +388,16 @@ export function DashboardPage() {
 
       {/* Console Footer: System diagnostic logs */}
       <div className="glass rounded-xl border border-white/10 overflow-hidden bg-black/60 shadow-xl">
-        <div className="px-4 py-2 border-b border-white/5 bg-white/2 flex items-center justify-between text-[10px] font-mono text-[#6DA5C0]">
+        <div className="px-4 py-2 border-b border-white/5 bg-white/2 flex items-center justify-between text-[10px] font-mono text-[#8E8A9F]">
           <span className="uppercase tracking-wider flex items-center gap-2">
-            <Terminal size={11} className="text-[#0F969C]" /> System Diagnostic Logs
+            <Terminal size={11} className="text-[#D0FF00]" /> System Diagnostic Logs
           </span>
           <span>SYS_TEMP: Normal</span>
         </div>
-        <div ref={logContainerRef} className="p-4 h-28 overflow-y-auto font-mono text-[11px] text-[#6DA5C0] space-y-1 scrollbar-hide">
+        <div ref={logContainerRef} className="p-4 h-28 overflow-y-auto font-mono text-[11px] text-[#8E8A9F] space-y-1 scrollbar-hide">
           {logs.map((log, idx) => (
             <div key={idx} className="flex gap-2">
-              <span className="text-[#0F969C]/60">[{new Date().toLocaleTimeString()}]</span>
+              <span className="text-[#D0FF00]/60">[{new Date().toLocaleTimeString()}]</span>
               <span>{log}</span>
             </div>
           ))}

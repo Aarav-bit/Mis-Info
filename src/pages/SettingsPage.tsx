@@ -23,25 +23,25 @@ export function SettingsPage() {
       {/* Title */}
       <div>
         <h1 className="text-3xl font-display font-bold text-white tracking-tight">Settings</h1>
-        <p className="text-[#6DA5C0] text-sm mt-1">Manage credentials, appearance configurations, and digest notifications.</p>
+        <p className="text-[#8E8A9F] text-sm mt-1">Manage credentials, appearance configurations, and digest notifications.</p>
       </div>
 
       {/* Profile Card */}
-      <Card className="border-white/10 bg-[#072e33]/40 backdrop-blur-sm">
+      <Card className="border-white/10 bg-[#141021]/40 backdrop-blur-sm">
         <CardHeader className="border-b border-white/5 pb-4">
           <CardTitle className="flex items-center gap-2 text-white font-display text-base">
-            <User size={18} className="text-[#0F969C]" /> Account Profile
+            <User size={18} className="text-[#D0FF00]" /> Account Profile
           </CardTitle>
-          <CardDescription className="text-[#6DA5C0]">Developer account details</CardDescription>
+          <CardDescription className="text-[#8E8A9F]">Developer account details</CardDescription>
         </CardHeader>
         <CardContent className="p-6">
           <div className="flex items-center gap-4">
-            <div className="w-16 h-16 rounded-xl bg-[#0F969C]/10 border border-[#0F969C]/30 flex items-center justify-center font-display font-bold text-[#0F969C] text-xl">
+            <div className="w-16 h-16 rounded-xl bg-[#D0FF00]/10 border border-[#D0FF00]/30 flex items-center justify-center font-display font-bold text-[#D0FF00] text-xl">
               MI
             </div>
             <div>
               <div className="font-semibold text-white">Auditor Account</div>
-              <div className="text-sm text-[#6DA5C0]">auditor@misinfo.ai</div>
+              <div className="text-sm text-[#8E8A9F]">auditor@misinfo.ai</div>
               <Badge variant="info" className="mt-2 font-mono text-[9px] uppercase tracking-wider">Premium Access</Badge>
             </div>
           </div>
@@ -49,12 +49,12 @@ export function SettingsPage() {
       </Card>
 
       {/* Theme Cards */}
-      <Card className="border-white/10 bg-[#072e33]/40 backdrop-blur-sm">
+      <Card className="border-white/10 bg-[#141021]/40 backdrop-blur-sm">
         <CardHeader className="border-b border-white/5 pb-4">
           <CardTitle className="flex items-center gap-2 text-white font-display text-base">
-            <Sun size={18} className="text-[#0F969C]" /> Workspace Appearance
+            <Sun size={18} className="text-[#D0FF00]" /> Workspace Appearance
           </CardTitle>
-          <CardDescription className="text-[#6DA5C0]">Select your preferred user interface appearance.</CardDescription>
+          <CardDescription className="text-[#8E8A9F]">Select your preferred user interface appearance.</CardDescription>
         </CardHeader>
         <CardContent className="p-6">
           <div className="grid grid-cols-3 gap-3">
@@ -66,11 +66,11 @@ export function SettingsPage() {
                   onClick={() => setTheme(t.id)}
                   className={`flex flex-col items-center gap-3 p-4 rounded-xl border transition-all ${
                     active
-                      ? 'border-[#0F969C] bg-[#0F969C]/15 text-white shadow-[0_0_12px_rgba(15, 150, 156,0.15)]'
-                      : 'border-white/5 hover:border-white/20 bg-[#05161A] text-[#6DA5C0]'
+                      ? 'border-[#D0FF00] bg-[#D0FF00]/15 text-white shadow-[0_0_12px_rgba(208, 255, 0,0.15)]'
+                      : 'border-white/5 hover:border-white/20 bg-[#09070F] text-[#8E8A9F]'
                   }`}
                 >
-                  <t.icon size={20} className={active ? 'text-[#0F969C]' : 'text-[#6DA5C0]'} />
+                  <t.icon size={20} className={active ? 'text-[#D0FF00]' : 'text-[#8E8A9F]'} />
                   <span className={`text-xs font-mono uppercase tracking-wider ${active ? 'font-bold' : ''}`}>{t.label}</span>
                 </button>
               )
@@ -80,12 +80,12 @@ export function SettingsPage() {
       </Card>
 
       {/* API Key */}
-      <Card className="border-white/10 bg-[#072e33]/40 backdrop-blur-sm">
+      <Card className="border-white/10 bg-[#141021]/40 backdrop-blur-sm">
         <CardHeader className="border-b border-white/5 pb-4">
           <CardTitle className="flex items-center gap-2 text-white font-display text-base">
-            <Key size={18} className="text-[#0F969C]" /> Integration API Key
+            <Key size={18} className="text-[#D0FF00]" /> Integration API Key
           </CardTitle>
-          <CardDescription className="text-[#6DA5C0]">Required for programmatic scanning audits.</CardDescription>
+          <CardDescription className="text-[#8E8A9F]">Required for programmatic scanning audits.</CardDescription>
         </CardHeader>
         <CardContent className="p-6 space-y-4">
           <div className="flex gap-2">
@@ -94,30 +94,30 @@ export function SettingsPage() {
                 type={apiKeyVisible ? 'text' : 'password'}
                 value={apiKey}
                 onChange={e => setApiKey(e.target.value)}
-                className="w-full h-10 rounded-lg border border-white/10 bg-black/25 px-4 text-xs font-mono text-[#E6F3F5] focus:outline-none focus:ring-2 focus:ring-[#0F969C] transition-all"
+                className="w-full h-10 rounded-lg border border-white/10 bg-black/25 px-4 text-xs font-mono text-[#FEFFFC] focus:outline-none focus:ring-2 focus:ring-[#D0FF00] transition-all"
               />
             </div>
             <Button
               variant="outline"
               size="icon"
               onClick={() => setApiKeyVisible(p => !p)}
-              className="border-white/10 hover:bg-white/5 text-[#6DA5C0] hover:text-[#E6F3F5]"
+              className="border-white/10 hover:bg-white/5 text-[#8E8A9F] hover:text-[#FEFFFC]"
             >
               {apiKeyVisible ? <EyeOff size={16} /> : <Eye size={16} />}
             </Button>
-            <Button variant="outline" size="sm" className="border-white/10 hover:bg-white/5 text-[#6DA5C0] hover:text-[#E6F3F5] font-mono text-xs uppercase tracking-wider">Regen</Button>
+            <Button variant="outline" size="sm" className="border-white/10 hover:bg-white/5 text-[#8E8A9F] hover:text-[#FEFFFC] font-mono text-xs uppercase tracking-wider">Regen</Button>
           </div>
-          <p className="text-[10px] font-mono text-[#6DA5C0] uppercase tracking-wider">Never share this key. Store it securely in environmental variables.</p>
+          <p className="text-[10px] font-mono text-[#8E8A9F] uppercase tracking-wider">Never share this key. Store it securely in environmental variables.</p>
         </CardContent>
       </Card>
 
       {/* Notifications */}
-      <Card className="border-white/10 bg-[#072e33]/40 backdrop-blur-sm">
+      <Card className="border-white/10 bg-[#141021]/40 backdrop-blur-sm">
         <CardHeader className="border-b border-white/5 pb-4">
           <CardTitle className="flex items-center gap-2 text-white font-display text-base">
-            <Bell size={18} className="text-[#0F969C]" /> Notification Preferences
+            <Bell size={18} className="text-[#D0FF00]" /> Notification Preferences
           </CardTitle>
-          <CardDescription className="text-[#6DA5C0]">Configure delivery options for verification digests.</CardDescription>
+          <CardDescription className="text-[#8E8A9F]">Configure delivery options for verification digests.</CardDescription>
         </CardHeader>
         <CardContent className="p-6 divide-y divide-white/5">
           {[
@@ -128,16 +128,16 @@ export function SettingsPage() {
             <div key={item.key} className={`flex items-center justify-between py-4 ${idx === 0 ? 'pt-0' : ''} ${idx === 2 ? 'pb-0' : ''}`}>
               <div>
                 <div className="text-sm font-semibold text-white">{item.label}</div>
-                <div className="text-xs text-[#6DA5C0] mt-1">{item.desc}</div>
+                <div className="text-xs text-[#8E8A9F] mt-1">{item.desc}</div>
               </div>
               <button
                 onClick={() => setNotifications(p => ({ ...p, [item.key]: !p[item.key] }))}
                 className={`relative w-11 h-6 rounded-full transition-colors border ${
-                  notifications[item.key] ? 'bg-[#0F969C]/25 border-[#0F969C]' : 'bg-[#05161A] border-white/10'
+                  notifications[item.key] ? 'bg-[#D0FF00]/25 border-[#D0FF00]' : 'bg-[#09070F] border-white/10'
                 }`}
               >
                 <span className={`absolute top-0.5 left-0.5 w-4.5 h-4.5 rounded-full transition-transform ${
-                  notifications[item.key] ? 'translate-x-5 bg-[#0F969C]' : 'translate-x-0 bg-[#6DA5C0]'
+                  notifications[item.key] ? 'translate-x-5 bg-[#D0FF00]' : 'translate-x-0 bg-[#8E8A9F]'
                 }`} />
               </button>
             </div>
@@ -146,26 +146,26 @@ export function SettingsPage() {
       </Card>
 
       {/* Security */}
-      <Card className="border-white/10 bg-[#072e33]/40 backdrop-blur-sm">
+      <Card className="border-white/10 bg-[#141021]/40 backdrop-blur-sm">
         <CardHeader className="border-b border-white/5 pb-4">
           <CardTitle className="flex items-center gap-2 text-white font-display text-base">
-            <Shield size={18} className="text-[#0F969C]" /> System Security
+            <Shield size={18} className="text-[#D0FF00]" /> System Security
           </CardTitle>
         </CardHeader>
         <CardContent className="p-6 space-y-3">
           <div className="flex items-center justify-between p-4 rounded-xl border border-white/5 bg-black/10">
             <div>
               <div className="text-sm font-semibold text-white">Two-Factor Authentication</div>
-              <div className="text-xs text-[#6DA5C0] mt-1">Add authentication steps using hardware security tokens.</div>
+              <div className="text-xs text-[#8E8A9F] mt-1">Add authentication steps using hardware security tokens.</div>
             </div>
             <Badge variant="warning" className="font-mono text-[9px] uppercase tracking-wider">Deactivated</Badge>
           </div>
           <div className="flex items-center justify-between p-4 rounded-xl border border-white/5 bg-black/10">
             <div>
               <div className="text-sm font-semibold text-white">Active Sessions</div>
-              <div className="text-xs text-[#6DA5C0] mt-1">1 active auditor connection verified.</div>
+              <div className="text-xs text-[#8E8A9F] mt-1">1 active auditor connection verified.</div>
             </div>
-            <Button variant="outline" size="sm" className="border-white/10 hover:bg-white/5 text-[#6DA5C0] hover:text-[#E6F3F5] font-mono text-xs uppercase tracking-wider">Terminate</Button>
+            <Button variant="outline" size="sm" className="border-white/10 hover:bg-white/5 text-[#8E8A9F] hover:text-[#FEFFFC] font-mono text-xs uppercase tracking-wider">Terminate</Button>
           </div>
         </CardContent>
       </Card>

@@ -39,9 +39,9 @@ const DotField = memo(({
   glowRadius = 160,
   sparkle = false,
   waveAmplitude = 0,
-  gradientFrom = 'rgba(15, 150, 156, 0.25)', // Use Copper Accent (#0F969C)
-  gradientTo = 'rgba(7, 46, 51, 0.15)',    // Use Dark Teal (#072E33)
-  glowColor = '#05161A',                     // Matches site background color
+  gradientFrom = 'rgba(208, 255, 0, 0.25)', // Use Copper Accent (#D0FF00)
+  gradientTo = 'rgba(20, 16, 33, 0.15)',    // Use Dark Teal (#141021)
+  glowColor = '#09070F',                     // Matches site background color
   ...rest
 }: DotFieldProps) => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
