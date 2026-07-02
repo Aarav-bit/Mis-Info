@@ -44,10 +44,13 @@ function getAllPhrases(text: string): Set<string> {
 export function computeKeywordScore(
   input: string,
   rule: KeywordRule,
-  allRuleKeywords: string[] = []
+  allRuleKeywords: string[] = [],
+  keywordFreqCache?: Map<string, number>,
+  inputPhrases?: Set<string>,
+  inputTokens?: string[]
 ): ScoredRule {
-  const inputPhrases = getAllPhrases(input);
-  const inputTokens = tokenize(input);
+  inputPhrases = inputPhrases || getAllPhrases(input);
+  inputTokens = inputTokens || tokenize(input);
   
   const required = rule.required || [];
   const optional = rule.optional || [];
@@ -109,12 +112,21 @@ export function computeKeywordScore(
   }
   
   const allKeywords = [...required, ...optional];
-  const keywordRarityBonus = allKeywords.length > 0 
-    ? allKeywords.reduce((sum, kw) => {
-        const freq = allRuleKeywords.filter(k => k.toLowerCase() === kw.toLowerCase()).length;
-        return sum + (1 / Math.max(1, freq));
-      }, 0) / allKeywords.length
-    : 0;
+  let keywordRarityBonus = 0;
+  if (allKeywords.length > 0) {
+    let sum = 0;
+    for (const kw of allKeywords) {
+      const lower = kw.toLowerCase();
+      let freq = 0;
+      if (keywordFreqCache) {
+        freq = keywordFreqCache.get(lower) || 1;
+      } else {
+        freq = allRuleKeywords.filter(k => k.toLowerCase() === lower).length;
+      }
+      sum += (1 / Math.max(1, freq));
+    }
+    keywordRarityBonus = sum / allKeywords.length;
+  }
   
   score += keywordRarityBonus * 0.1;
   
@@ -132,16 +144,27 @@ export function findBestRuleMatch(
   rules: Map<string, KeywordRule>
 ): { ruleId: string; scoredRule: ScoredRule } | null {
   const allKeywords: string[] = [];
+  const keywordFreqCache = new Map<string, number>();
+
   for (const rule of rules.values()) {
     if (rule.required) allKeywords.push(...rule.required);
     if (rule.optional) allKeywords.push(...rule.optional);
   }
   
+  for (const kw of allKeywords) {
+    const lower = kw.toLowerCase();
+    keywordFreqCache.set(lower, (keywordFreqCache.get(lower) || 0) + 1);
+  }
+
   let bestMatch: { ruleId: string; scoredRule: ScoredRule } | null = null;
   let bestScore = 0;
   
+  // Precompute tokens and phrases once, rather than per rule
+  const inputPhrases = getAllPhrases(input);
+  const inputTokens = tokenize(input);
+
   for (const [ruleId, rule] of rules.entries()) {
-    const scored = computeKeywordScore(input, rule, allKeywords);
+    const scored = computeKeywordScore(input, rule, allKeywords, keywordFreqCache, inputPhrases, inputTokens);
     if (scored.score > bestScore) {
       bestScore = scored.score;
       bestMatch = { ruleId, scoredRule: scored };
