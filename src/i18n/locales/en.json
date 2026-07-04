@@ -1,0 +1,53 @@
+{
+  "nav": {
+    "dashboard": "Dashboard",
+    "analytics": "Analytics",
+    "history": "History",
+    "settings": "Settings",
+    "about": "About"
+  },
+  "dashboard": {
+    "title": "Verification Engine",
+    "subtitle": "Submit a claim, URL, or screenshot to begin real-time analysis.",
+    "tabs": {
+      "text": "Text",
+      "url": "URL",
+      "screenshot": "Screenshot"
+    },
+    "placeholder": {
+      "text": "Paste your claim, news headline, or viral message here...",
+      "url": "Paste a URL to an article or social media post...",
+      "screenshot": "Drop a screenshot here or click to upload"
+    },
+    "verifyButton": "Verify Claim",
+    "analyzing": "Analyzing...",
+    "examplesLabel": "Try an example",
+    "errorEmpty": "Please enter a claim description or URL."
+  },
+  "pipeline": {
+    "step1": "Extracting Claim",
+    "step2": "Analyzing Language Risk",
+    "step3": "Retrieving Evidence",
+    "step4": "Building Consensus",
+    "step5": "Computing Trust Score"
+  },
+  "report": {
+    "trustScore": "Trust Score",
+    "status": "Status",
+    "confidence": "Confidence",
+    "sources": "Sources",
+    "reasoning": "Reasoning",
+    "credibilityFactors": "Credibility Factors",
+    "scoreBreakdown": "Score Breakdown",
+    "detectedLanguage": "Detected Language",
+    "bookmark": "Bookmark",
+    "bookmarked": "Bookmarked"
+  },
+  "languages": {
+    "en": "English",
+    "hi": "हिंदी",
+    "ta": "தமிழ்",
+    "ar": "العربية",
+    "es": "Español"
+  }
+}

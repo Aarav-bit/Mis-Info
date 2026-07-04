@@ -1,0 +1,53 @@
+{
+  "nav": {
+    "dashboard": "Panel",
+    "analytics": "Analíticas",
+    "history": "Historial",
+    "settings": "Ajustes",
+    "about": "Acerca de"
+  },
+  "dashboard": {
+    "title": "Motor de Verificación",
+    "subtitle": "Envíe una afirmación, URL o captura de pantalla para iniciar el análisis en tiempo real.",
+    "tabs": {
+      "text": "Texto",
+      "url": "URL",
+      "screenshot": "Captura"
+    },
+    "placeholder": {
+      "text": "Pega tu afirmación, titular de noticias o mensaje viral aquí...",
+      "url": "Pega una URL de un artículo o publicación en redes sociales...",
+      "screenshot": "Suelta una captura aquí o haz clic para subir"
+    },
+    "verifyButton": "Verificar Afirmación",
+    "analyzing": "Analizando...",
+    "examplesLabel": "Prueba un ejemplo",
+    "errorEmpty": "Por favor ingrese una afirmación o URL."
+  },
+  "pipeline": {
+    "step1": "Extrayendo Afirmación",
+    "step2": "Analizando Riesgo Lingüístico",
+    "step3": "Recuperando Evidencia",
+    "step4": "Construyendo Consenso",
+    "step5": "Calculando Puntuación de Confianza"
+  },
+  "report": {
+    "trustScore": "Puntuación de Confianza",
+    "status": "Estado",
+    "confidence": "Confianza",
+    "sources": "Fuentes",
+    "reasoning": "Razonamiento",
+    "credibilityFactors": "Factores de Credibilidad",
+    "scoreBreakdown": "Desglose de Puntuación",
+    "detectedLanguage": "Idioma Detectado",
+    "bookmark": "Marcador",
+    "bookmarked": "Marcado"
+  },
+  "languages": {
+    "en": "English",
+    "hi": "हिंदी",
+    "ta": "தமிழ்",
+    "ar": "العربية",
+    "es": "Español"
+  }
+}

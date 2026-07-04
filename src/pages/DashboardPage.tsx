@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Search, Link2, Image, ArrowRight, Sparkles, Shield, AlertCircle, Upload, Terminal, Cpu, Loader2 } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { useVerification } from '../contexts/VerificationContext'
 import { AnalysisPipeline } from '../components/features/AnalysisPipeline'
 import { Button } from '../components/ui/Button'
@@ -41,6 +42,7 @@ export function DashboardPage() {
   const navigate = useNavigate()
   const { verify, isAnalyzing, analysisStep } = useVerification()
   const { toast } = useToast()
+  const { t } = useTranslation()
   
   const [activeTab, setActiveTab] = useState<InputTab>('text')
   const [input, setInput] = useState('')
@@ -73,7 +75,7 @@ export function DashboardPage() {
   }, [logs])
 
   const handleVerify = async () => {
-    if (!input.trim()) { setError('Please enter a claim description or URL.'); return }
+    if (!input.trim()) { setError(t('dashboard.errorEmpty')); return }
     setError('')
     const reportId = await verify(input, activeTab)
     if (reportId) {
@@ -202,9 +204,9 @@ export function DashboardPage() {
   }
 
   const tabs = [
-    { id: 'text' as InputTab, label: 'Text Input', icon: <Search size={13} />, placeholder: 'Paste claim text or article paragraphs to audit...' },
-    { id: 'url' as InputTab, label: 'Article URL', icon: <Link2 size={13} />, placeholder: 'https://news-outlet.com/article-to-verify' },
-    { id: 'screenshot' as InputTab, label: 'Describe Image', icon: <Image size={13} />, placeholder: 'Describe the contents of the image or claim screenshot...' },
+    { id: 'text' as InputTab, label: t('dashboard.tabs.text'), icon: <Search size={13} />, placeholder: t('dashboard.placeholder.text') },
+    { id: 'url' as InputTab, label: t('dashboard.tabs.url'), icon: <Link2 size={13} />, placeholder: t('dashboard.placeholder.url') },
+    { id: 'screenshot' as InputTab, label: t('dashboard.tabs.screenshot'), icon: <Image size={13} />, placeholder: t('dashboard.placeholder.screenshot') },
   ]
 
   if (isAnalyzing) {

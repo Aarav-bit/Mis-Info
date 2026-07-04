@@ -3,6 +3,7 @@ import { useLocation, Link } from 'react-router-dom'
 import { Bell, Moon, Sun, Menu, Search, Monitor } from 'lucide-react'
 import { useTheme } from '../../contexts/ThemeContext'
 import { Button } from '../ui/Button'
+import { LanguageSelector } from '../ui/LanguageSelector'
 
 const pageLabels: Record<string, string> = {
   '/dashboard': 'Verification Workspace',
@@ -52,7 +53,8 @@ export function TopNav({ onMenuClick, onCommandOpen }: TopNavProps) {
         </kbd>
       </button>
 
-      <div className="flex items-center gap-1">
+      <div className="flex items-center gap-2">
+        <LanguageSelector />
         <Button variant="ghost" size="icon" className="relative text-[#8E8A9F] hover:text-[#FEFFFC]">
           <Bell size={18} />
           <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full bg-[#D0FF00]" />
