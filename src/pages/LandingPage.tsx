@@ -1,10 +1,10 @@
 import React, { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { motion, useInView } from 'framer-motion'
+import { motion, useInView, AnimatePresence } from 'framer-motion'
 import {
   Shield, ArrowRight, ArrowUpRight, CheckCircle, Globe,
   Brain, Zap, FileText, Search, ScanLine, ChevronDown,
-  Star, BookOpen, Activity
+  Star, BookOpen, Activity, Menu, X
 } from 'lucide-react'
 import DotField from '../components/ui/DotField'
 
@@ -130,11 +130,11 @@ function AnalysisCard() {
         WebkitBackdropFilter: 'blur(16px)',
         border: '1px solid rgba(255,255,255,0.10)',
         borderRadius: 16,
-        padding: 32,
         boxShadow: '0 32px 64px rgba(0,0,0,0.4)',
-        minWidth: 360,
         maxWidth: 400,
-      }}>
+      }}
+      className="w-full min-w-0 sm:min-w-[360px] p-4 sm:p-8"
+      >
         {/* Window chrome */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 28, paddingBottom: 16, borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
           <div style={{ display: 'flex', gap: 8 }}>
@@ -298,6 +298,7 @@ function Step({ step, index, isLast }: { step: typeof steps[0]; index: number; i
 // ─── Main Landing Page ───────────────────────────────────────────────────────
 export function LandingPage() {
   const heroRef = useRef(null)
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
   return (
     <div style={{ minHeight: '100vh', background: '#09070F', overflowX: 'hidden', position: 'relative' }}>
@@ -317,13 +318,7 @@ export function LandingPage() {
       </div>
 
       {/* ── Navigation ─────────────────────────────────────────────────── */}
-      <nav style={{
-        position: 'fixed', top: 0, left: 0, right: 0, zIndex: 50,
-        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        padding: '0 64px', height: 80,
-        background: 'rgba(26,26,26,0.85)', backdropFilter: 'blur(20px)',
-        borderBottom: '1px solid rgba(255,255,255,0.07)',
-      }}>
+      <nav className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-4 sm:px-8 md:px-16 h-20 bg-[#1a1a1a]/85 backdrop-blur-xl border-b border-white/5">
         <a href="#" style={{ display: 'flex', alignItems: 'center', gap: 10, textDecoration: 'none' }}>
           <div style={{ width: 32, height: 32, borderRadius: 8, background: 'rgba(208, 255, 0,0.2)', border: '1px solid rgba(208, 255, 0,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <Shield size={16} style={{ color: '#D0FF00' }} />
@@ -333,7 +328,8 @@ export function LandingPage() {
           </span>
         </a>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: 40 }}>
+        {/* Desktop links */}
+        <div className="hidden lg:flex items-center gap-10">
           {['Features', 'How it Works', 'Trust Score'].map((link) => (
             <a key={link} href={`#${link.toLowerCase().replace(/\s/g, '-')}`} style={{
               fontFamily: "'Inter', sans-serif", fontSize: 14, color: '#8E8A9F',
@@ -347,32 +343,66 @@ export function LandingPage() {
           ))}
         </div>
 
-        <Link to="/dashboard" style={{ textDecoration: 'none' }}>
-          <motion.button
-            whileHover={{ backgroundColor: '#c9a07b', scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            style={{
-              fontFamily: "'Space Grotesk', sans-serif", fontSize: 14, fontWeight: 600,
-              color: '#09070F', background: '#D0FF00', border: 'none',
-              padding: '10px 24px', borderRadius: 4, cursor: 'pointer',
-              boxShadow: 'inset 0 1px rgba(255,255,255,0.2)',
-            }}
+        <div className="flex items-center gap-4">
+          <Link to="/dashboard" style={{ textDecoration: 'none' }} className="hidden sm:block">
+            <motion.button
+              whileHover={{ backgroundColor: '#c9a07b', scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              style={{
+                fontFamily: "'Space Grotesk', sans-serif", fontSize: 14, fontWeight: 600,
+                color: '#09070F', background: '#D0FF00', border: 'none',
+                padding: '10px 24px', borderRadius: 4, cursor: 'pointer',
+                boxShadow: 'inset 0 1px rgba(255,255,255,0.2)',
+              }}
+            >
+              Try Now
+            </motion.button>
+          </Link>
+
+          {/* Hamburger Menu Button */}
+          <button
+            onClick={() => setMobileMenuOpen(p => !p)}
+            className="lg:hidden p-2 text-[#8E8A9F] hover:text-white transition-colors"
           >
-            Try Now
-          </motion.button>
-        </Link>
+            {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+          </button>
+        </div>
       </nav>
+
+      {/* Mobile Menu Dropdown */}
+      <AnimatePresence>
+        {mobileMenuOpen && (
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            transition={{ duration: 0.2 }}
+            className="fixed top-20 left-0 right-0 z-40 bg-[#141021] border-b border-white/10 px-6 py-8 flex flex-col gap-6 lg:hidden shadow-2xl"
+          >
+            {['Features', 'How it Works', 'Trust Score'].map((link) => (
+              <a
+                key={link}
+                href={`#${link.toLowerCase().replace(/\s/g, '-')}`}
+                onClick={() => setMobileMenuOpen(false)}
+                className="font-sans text-base text-[#8E8A9F] hover:text-[#FEFFFC] transition-colors"
+              >
+                {link}
+              </a>
+            ))}
+            <Link to="/dashboard" onClick={() => setMobileMenuOpen(false)} className="w-full" style={{ textDecoration: 'none' }}>
+              <button className="w-full font-display text-sm font-semibold text-[#09070F] bg-[#D0FF00] py-3 rounded hover:bg-[#c9a07b] transition-colors cursor-pointer">
+                Try Now
+              </button>
+            </Link>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* ── Hero Section ───────────────────────────────────────────────── */}
       <section
         ref={heroRef}
         id="hero"
-        style={{
-          position: 'relative', zIndex: 10,
-          minHeight: '100vh', display: 'flex', alignItems: 'center',
-          padding: '140px 64px 100px',
-          maxWidth: 1440, margin: '0 auto',
-        }}
+        className="relative z-10 min-h-screen flex items-center px-4 sm:px-8 md:px-16 py-28 md:py-36 max-w-[1440px] mx-auto"
       >
         {/* Teal radial glow */}
         <div style={{
@@ -382,7 +412,7 @@ export function LandingPage() {
           pointerEvents: 'none',
         }} />
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 80, alignItems: 'center', width: '100%' }}>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 items-center w-full">
           {/* Left — Hero copy */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 32 }}>
             {/* Badge */}
@@ -444,14 +474,15 @@ export function LandingPage() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.7, duration: 0.5 }}
-              style={{ display: 'flex', gap: 16, alignItems: 'center' }}
+              className="flex flex-col sm:flex-row gap-4 items-center"
             >
-              <Link to="/dashboard" style={{ textDecoration: 'none' }}>
+              <Link to="/dashboard" style={{ textDecoration: 'none' }} className="w-full sm:w-auto">
                 <motion.button
                   whileHover={{ backgroundColor: '#c9a07b', scale: 1.03 }}
                   whileTap={{ scale: 0.97 }}
+                  className="w-full sm:w-auto"
                   style={{
-                    display: 'flex', alignItems: 'center', gap: 10,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
                     fontFamily: "'Space Grotesk', sans-serif", fontSize: 15, fontWeight: 600,
                     color: '#09070F', background: '#D0FF00',
                     border: 'none', padding: '14px 28px', borderRadius: 4, cursor: 'pointer',
@@ -464,12 +495,13 @@ export function LandingPage() {
                 </motion.button>
               </Link>
 
-              <a href="#how-it-works" style={{ textDecoration: 'none' }}>
+              <a href="#how-it-works" style={{ textDecoration: 'none' }} className="w-full sm:w-auto">
                 <motion.button
                   whileHover={{ backgroundColor: 'rgba(255,255,255,0.06)' }}
                   whileTap={{ scale: 0.97 }}
+                  className="w-full sm:w-auto"
                   style={{
-                    display: 'flex', alignItems: 'center', gap: 10,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
                     fontFamily: "'Space Grotesk', sans-serif", fontSize: 15, fontWeight: 500,
                     color: '#FEFFFC', background: 'transparent',
                     border: '1px solid rgba(201,192,185,0.4)',
@@ -488,11 +520,7 @@ export function LandingPage() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.85, duration: 0.5 }}
-              style={{
-                display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)',
-                gap: 24, paddingTop: 32, marginTop: 8,
-                borderTop: '1px solid rgba(255,255,255,0.08)',
-              }}
+              className="grid grid-cols-3 gap-4 sm:gap-6 pt-8 mt-2 border-t border-white/10"
             >
               {[
                 { value: '10M+', label: 'Claims Verified' },
@@ -500,23 +528,22 @@ export function LandingPage() {
                 { value: '⬤ Live', label: 'Real-Time', dot: true },
               ].map((stat, i) => (
                 <div key={i}>
-                  <div style={{
-                    fontFamily: "'Space Grotesk', sans-serif", fontSize: 26, fontWeight: 700,
-                    color: stat.highlight ? '#D0FF00' : '#FFFFFF',
-                    display: 'flex', alignItems: 'center', gap: 8,
-                  }}>
+                  <div 
+                    className="font-display text-lg sm:text-2xl font-bold flex items-center gap-1.5 sm:gap-2"
+                    style={{ color: stat.highlight ? '#D0FF00' : '#FFFFFF' }}
+                  >
                     {stat.dot ? (
                       <>
                         <motion.span
                           animate={{ opacity: [1, 0.3, 1] }}
                           transition={{ duration: 2, repeat: Infinity }}
-                          style={{ width: 10, height: 10, borderRadius: '50%', background: '#D0FF00', display: 'inline-block' }}
+                          style={{ width: 8, height: 8, borderRadius: '50%', background: '#D0FF00', display: 'inline-block' }}
                         />
                         <span>Live</span>
                       </>
                     ) : stat.value}
                   </div>
-                  <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 11, color: '#8E8A9F', textTransform: 'uppercase', letterSpacing: '0.08em', marginTop: 4 }}>
+                  <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9, color: '#8E8A9F', textTransform: 'uppercase', letterSpacing: '0.08em', marginTop: 4 }} className="sm:text-[10px]">
                     {stat.label}
                   </div>
                 </div>
@@ -534,11 +561,7 @@ export function LandingPage() {
       {/* ── Features Section ───────────────────────────────────────────── */}
       <section
         id="features"
-        style={{
-          position: 'relative', zIndex: 10,
-          padding: '120px 64px',
-          maxWidth: 1440, margin: '0 auto',
-        }}
+        className="relative z-10 px-4 sm:px-8 md:px-16 py-24 max-w-[1440px] mx-auto"
       >
         <div style={{ textAlign: 'center', marginBottom: 72 }}>
           <span style={{
@@ -550,15 +573,15 @@ export function LandingPage() {
           }}>
             Capabilities
           </span>
-          <h2 style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 48, fontWeight: 700, color: '#FEFFFC', letterSpacing: '-0.02em', margin: '0 0 16px' }}>
+          <h2 className="font-display text-3xl sm:text-4xl md:text-5xl font-bold text-white tracking-tight mb-4">
             Built for Truth-Seekers
           </h2>
-          <p style={{ fontFamily: "'Inter', sans-serif", fontSize: 18, color: '#8E8A9F', maxWidth: 540, margin: '0 auto', lineHeight: 1.7 }}>
+          <p className="font-sans text-sm sm:text-base md:text-lg text-[#8E8A9F] max-w-[540px] mx-auto leading-relaxed">
             Every feature is engineered for clarity, speed, and explainability — because trust requires evidence.
           </p>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 20 }}>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {features.map((f, i) => <FeatureCard key={i} feature={f} index={i} />)}
         </div>
       </section>
@@ -566,17 +589,11 @@ export function LandingPage() {
       {/* ── How It Works Section ──────────────────────────────────────── */}
       <section
         id="how-it-works"
-        style={{
-          position: 'relative', zIndex: 10,
-          padding: '120px 64px',
-          background: 'rgba(20, 16, 33,0.08)',
-          borderTop: '1px solid rgba(255,255,255,0.05)',
-          borderBottom: '1px solid rgba(255,255,255,0.05)',
-        }}
+        className="relative z-10 px-4 sm:px-8 md:px-16 py-24 bg-[#141021]/5 border-y border-white/5"
       >
-        <div style={{ maxWidth: 1200, margin: '0 auto', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 100, alignItems: 'start' }}>
+        <div className="max-w-[1200px] mx-auto grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-24 items-start">
           {/* Left — section header */}
-          <div style={{ position: 'sticky', top: 120 }}>
+          <div className="lg:sticky lg:top-32">
             <span style={{
               display: 'inline-block',
               fontFamily: "'JetBrains Mono', monospace", fontSize: 11, letterSpacing: '0.12em',
@@ -586,10 +603,10 @@ export function LandingPage() {
             }}>
               The Process
             </span>
-            <h2 style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 48, fontWeight: 700, color: '#FEFFFC', letterSpacing: '-0.02em', lineHeight: 1.15, marginBottom: 20 }}>
+            <h2 className="font-display text-3xl sm:text-4xl md:text-5xl font-bold text-white tracking-tight leading-tight mb-6">
               From Claim to<br />Verdict in<br /><span style={{ color: '#D0FF00' }}>5 Stages</span>
             </h2>
-            <p style={{ fontFamily: "'Inter', sans-serif", fontSize: 17, color: '#8E8A9F', lineHeight: 1.7, marginBottom: 40 }}>
+            <p className="font-sans text-sm sm:text-base text-[#8E8A9F] leading-relaxed mb-10 max-w-[480px]">
               A rigorous, transparent pipeline ensures every verification is traceable, auditable, and explainable.
             </p>
             <Link to="/dashboard" style={{ textDecoration: 'none' }}>
@@ -609,7 +626,7 @@ export function LandingPage() {
           </div>
 
           {/* Right — Steps */}
-          <div style={{ paddingTop: 8 }}>
+          <div className="w-full mt-4 lg:mt-0">
             {steps.map((step, i) => (
               <Step key={i} step={step} index={i} isLast={i === steps.length - 1} />
             ))}
@@ -620,23 +637,14 @@ export function LandingPage() {
       {/* ── Trust Score CTA Section ─────────────────────────────────────── */}
       <section
         id="trust-score"
-        style={{
-          position: 'relative', zIndex: 10,
-          padding: '120px 64px',
-          maxWidth: 1440, margin: '0 auto',
-        }}
+        className="relative z-10 px-4 sm:px-8 md:px-16 py-24 max-w-[1440px] mx-auto"
       >
         <motion.div
           initial={{ opacity: 0, y: 40 }}
           whileInView={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.7 }}
           viewport={{ once: true }}
-          style={{
-            background: 'rgba(20, 16, 33,0.18)',
-            border: '1px solid rgba(208, 255, 0,0.2)',
-            borderRadius: 16, padding: 80,
-            textAlign: 'center', position: 'relative', overflow: 'hidden',
-          }}
+          className="bg-[#141021]/18 border border-[#D0FF00]/20 rounded-2xl p-6 sm:p-12 md:p-20 text-center relative overflow-hidden"
         >
           {/* Background copper glow */}
           <div style={{
@@ -646,20 +654,21 @@ export function LandingPage() {
           }} />
 
           <div style={{ position: 'relative', zIndex: 1 }}>
-            <Star size={36} style={{ color: '#D0FF00', marginBottom: 24 }} />
-            <h2 style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 48, fontWeight: 700, color: '#FEFFFC', letterSpacing: '-0.02em', marginBottom: 16, lineHeight: 1.2 }}>
+            <Star size={36} style={{ color: '#D0FF00', marginBottom: 24 }} className="mx-auto" />
+            <h2 className="font-display text-3xl sm:text-4xl md:text-5xl font-bold text-white tracking-tight mb-4">
               Start Verifying Today
             </h2>
-            <p style={{ fontFamily: "'Inter', sans-serif", fontSize: 18, color: '#8E8A9F', maxWidth: 480, margin: '0 auto 48px', lineHeight: 1.7 }}>
+            <p className="font-sans text-sm sm:text-base md:text-lg text-[#8E8A9F] max-w-[480px] mx-auto mb-8 sm:mb-12 leading-relaxed">
               Join thousands of journalists, researchers, and fact-checkers who rely on Mis·Info for the truth.
             </p>
-            <div style={{ display: 'flex', gap: 16, justifyContent: 'center' }}>
-              <Link to="/dashboard" style={{ textDecoration: 'none' }}>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
+              <Link to="/dashboard" style={{ textDecoration: 'none' }} className="w-full sm:w-auto">
                 <motion.button
                   whileHover={{ backgroundColor: '#c9a07b', scale: 1.03 }}
                   whileTap={{ scale: 0.97 }}
+                  className="w-full sm:w-auto"
                   style={{
-                    display: 'flex', alignItems: 'center', gap: 10,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
                     fontFamily: "'Space Grotesk', sans-serif", fontSize: 16, fontWeight: 600,
                     color: '#09070F', background: '#D0FF00',
                     border: 'none', padding: '16px 36px', borderRadius: 4, cursor: 'pointer',
@@ -668,11 +677,12 @@ export function LandingPage() {
                   Try Demo Free <ArrowRight size={18} />
                 </motion.button>
               </Link>
-              <Link to="/about" style={{ textDecoration: 'none' }}>
+              <Link to="/about" style={{ textDecoration: 'none' }} className="w-full sm:w-auto">
                 <motion.button
                   whileHover={{ backgroundColor: 'rgba(255,255,255,0.06)' }}
+                  className="w-full sm:w-auto"
                   style={{
-                    display: 'flex', alignItems: 'center', gap: 10,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
                     fontFamily: "'Space Grotesk', sans-serif", fontSize: 16, fontWeight: 500,
                     color: '#FEFFFC', background: 'transparent',
                     border: '1px solid rgba(201,192,185,0.35)',
@@ -689,12 +699,7 @@ export function LandingPage() {
       </section>
 
       {/* ── Footer ──────────────────────────────────────────────────────── */}
-      <footer style={{
-        position: 'relative', zIndex: 10,
-        borderTop: '1px solid rgba(255,255,255,0.07)',
-        padding: '32px 64px',
-        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-      }}>
+      <footer className="relative z-10 border-t border-white/5 px-4 sm:px-8 md:px-16 py-8 flex flex-col md:flex-row items-center justify-between gap-6">
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <div style={{ width: 24, height: 24, borderRadius: 6, background: 'rgba(208, 255, 0,0.15)', border: '1px solid rgba(208, 255, 0,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <Shield size={12} style={{ color: '#D0FF00' }} />
@@ -704,7 +709,7 @@ export function LandingPage() {
           </span>
           <span style={{ fontFamily: "'Inter', sans-serif", fontSize: 13, color: '#8E8A9F', opacity: 0.6 }}>© 2025</span>
         </div>
-        <div style={{ display: 'flex', gap: 32 }}>
+        <div className="flex flex-wrap justify-center gap-6 sm:gap-8">
           {[
             { label: 'Dashboard', to: '/dashboard' },
             { label: 'Analytics', to: '/analytics' },

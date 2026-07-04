@@ -57,7 +57,7 @@ export function SettingsPage() {
           <CardDescription className="text-[#8E8A9F]">Select your preferred user interface appearance.</CardDescription>
         </CardHeader>
         <CardContent className="p-6">
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             {themes.map(t => {
               const active = theme === t.id
               return (

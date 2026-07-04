@@ -54,6 +54,14 @@ export function TopNav({ onMenuClick, onCommandOpen }: TopNavProps) {
       </button>
 
       <div className="flex items-center gap-2">
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={onCommandOpen}
+          className="flex sm:hidden text-[#8E8A9F] hover:text-[#FEFFFC]"
+        >
+          <Search size={18} />
+        </Button>
         <LanguageSelector />
         <Button variant="ghost" size="icon" className="relative text-[#8E8A9F] hover:text-[#FEFFFC]">
           <Bell size={18} />

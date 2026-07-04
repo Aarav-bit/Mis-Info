@@ -12,6 +12,7 @@ export interface GooeyNavItem {
 interface GooeyNavProps {
   items: GooeyNavItem[];
   sidebarOpen?: boolean;
+  onItemClick?: () => void;
   animationTime?: number;
   particleCount?: number;
   particleDistances?: [number, number];
@@ -24,6 +25,7 @@ interface GooeyNavProps {
 const GooeyNav: React.FC<GooeyNavProps> = ({
   items,
   sidebarOpen = true,
+  onItemClick,
   animationTime = 400,
   particleCount = 10,
   particleDistances = [50, 5],
@@ -128,11 +130,17 @@ const GooeyNav: React.FC<GooeyNavProps> = ({
     const liEl = e.currentTarget.parentElement;
     if (!liEl) return;
 
-    if (activeIndex === index) return;
+    if (activeIndex === index) {
+      if (onItemClick) onItemClick();
+      return;
+    }
 
     setActiveIndex(index);
     updateEffectPosition(liEl);
     navigate(to);
+    if (onItemClick) {
+      onItemClick();
+    }
 
     if (filterRef.current) {
       const particles = filterRef.current.querySelectorAll('.particle');

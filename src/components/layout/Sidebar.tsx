@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useState, useEffect } from 'react'
 import { useLocation } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
@@ -16,7 +16,6 @@ const navItems = [
   { to: '/about', icon: Info, label: 'About' },
 ]
 
-
 interface SidebarProps {
   open: boolean
   onToggle: () => void
@@ -24,12 +23,32 @@ interface SidebarProps {
 
 export function Sidebar({ open, onToggle }: SidebarProps) {
   const location = useLocation()
+  const [isMobile, setIsMobile] = useState(false)
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 1024)
+    }
+    handleResize()
+    window.addEventListener('resize', handleResize)
+    return () => window.removeEventListener('resize', handleResize)
+  }, [])
+
+  // On mobile, width is always 190 (fully expanded drawer width)
+  // On desktop, width animates between 190 (expanded) and 56 (collapsed)
+  const sidebarWidth = isMobile ? 190 : (open ? 190 : 56)
 
   return (
     <motion.aside
-      animate={{ width: open ? 190 : 56 }}
+      animate={{ 
+        width: sidebarWidth,
+        x: isMobile ? (open ? 0 : -190) : 0
+      }}
       transition={{ duration: 0.3, ease: 'easeInOut' }}
-      className="relative flex flex-col h-full border-r border-white/10 bg-[#141021] flex-shrink-0 overflow-hidden z-20"
+      className={cn(
+        "flex flex-col h-full border-r border-white/10 bg-[#141021] flex-shrink-0 overflow-hidden",
+        isMobile ? "fixed left-0 top-0 z-40 shadow-2xl" : "relative z-20"
+      )}
     >
       {/* Logo */}
       <div className="flex items-center gap-3 p-4 border-b border-white/10 h-16 bg-[#09070f]">
@@ -37,7 +56,7 @@ export function Sidebar({ open, onToggle }: SidebarProps) {
           <Shield size={16} className="text-[#D0FF00]" />
         </div>
         <AnimatePresence>
-          {open && (
+          {(open || isMobile) && (
             <motion.div
               initial={{ opacity: 0, x: -10 }}
               animate={{ opacity: 1, x: 0 }}
@@ -56,12 +75,16 @@ export function Sidebar({ open, onToggle }: SidebarProps) {
 
       {/* Nav Items with GooeyNav */}
       <div className="flex-1 px-2 py-3 mt-4 overflow-x-hidden overflow-y-auto scrollbar-hide">
-        <GooeyNav items={navItems} sidebarOpen={open} />
+        <GooeyNav 
+          items={navItems} 
+          sidebarOpen={open || isMobile} 
+          onItemClick={() => { if (isMobile) onToggle(); }}
+        />
       </div>
 
       {/* Version */}
       <AnimatePresence>
-        {open && (
+        {(open || isMobile) && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -77,12 +100,14 @@ export function Sidebar({ open, onToggle }: SidebarProps) {
       </AnimatePresence>
 
       {/* Toggle button */}
-      <button
-        onClick={onToggle}
-        className="absolute -right-3 top-20 w-6 h-6 rounded-full bg-[#09070F] border border-white/10 shadow-md flex items-center justify-center hover:bg-[#141021] text-[#8E8A9F] hover:text-[#FEFFFC] transition-colors z-30"
-      >
-        {open ? <ChevronLeft size={12} /> : <ChevronRight size={12} />}
-      </button>
+      {!isMobile && (
+        <button
+          onClick={onToggle}
+          className="absolute -right-3 top-20 w-6 h-6 rounded-full bg-[#09070F] border border-white/10 shadow-md flex items-center justify-center hover:bg-[#141021] text-[#8E8A9F] hover:text-[#FEFFFC] transition-colors z-30"
+        >
+          {open ? <ChevronLeft size={12} /> : <ChevronRight size={12} />}
+        </button>
+      )}
     </motion.aside>
   )
 }
