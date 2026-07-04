@@ -1,12 +1,16 @@
 import React, { useState } from 'react'
 import { motion } from 'framer-motion'
-import { Moon, Sun, Monitor, Bell, Key, User, Shield, Save, Eye, EyeOff } from 'lucide-react'
+import { Moon, Sun, Monitor, Bell, Key, User, Shield, Save, Eye, EyeOff, LogOut } from 'lucide-react'
 import { useTheme } from '../contexts/ThemeContext'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../components/ui/Card'
 import { Button } from '../components/ui/Button'
 import { Badge } from '../components/ui/Badge'
+import { useAuth } from '../contexts/AuthContext'
+import { useNavigate } from 'react-router-dom'
 
 export function SettingsPage() {
+  const { user, logout, isMock } = useAuth()
+  const navigate = useNavigate()
   const { theme, setTheme } = useTheme()
   const [apiKeyVisible, setApiKeyVisible] = useState(false)
   const [apiKey, setApiKey] = useState('mi_sk_verify_xxxx_883a91bc77')
@@ -35,15 +39,35 @@ export function SettingsPage() {
           <CardDescription className="text-[#8E8A9F]">Developer account details</CardDescription>
         </CardHeader>
         <CardContent className="p-6">
-          <div className="flex items-center gap-4">
-            <div className="w-16 h-16 rounded-xl bg-[#D0FF00]/10 border border-[#D0FF00]/30 flex items-center justify-center font-display font-bold text-[#D0FF00] text-xl">
-              MI
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="flex items-center gap-4">
+              {user?.imageUrl ? (
+                <img src={user.imageUrl} alt={user.name} className="w-16 h-16 rounded-xl object-cover border border-white/10" />
+              ) : (
+                <div className="w-16 h-16 rounded-xl bg-[#D0FF00]/10 border border-[#D0FF00]/30 flex items-center justify-center font-display font-bold text-[#D0FF00] text-xl">
+                  {user?.name ? user.name.split(' ').map(n => n[0]).join('') : 'MI'}
+                </div>
+              )}
+              <div>
+                <div className="font-semibold text-white">{user?.name || 'Auditor Account'}</div>
+                <div className="text-sm text-[#8E8A9F]">{user?.email || 'auditor@misinfo.ai'}</div>
+                <Badge variant="info" className="mt-2 font-mono text-[9px] uppercase tracking-wider">{user?.role || 'Premium Access'}</Badge>
+              </div>
             </div>
-            <div>
-              <div className="font-semibold text-white">Auditor Account</div>
-              <div className="text-sm text-[#8E8A9F]">auditor@misinfo.ai</div>
-              <Badge variant="info" className="mt-2 font-mono text-[9px] uppercase tracking-wider">Premium Access</Badge>
-            </div>
+
+            {/* Logout button directly in Profile card */}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={async () => {
+                await logout()
+                navigate('/login')
+              }}
+              className="border-red-500/20 hover:bg-red-500/10 text-red-400 font-mono text-xs uppercase tracking-wider"
+              leftIcon={<LogOut size={14} />}
+            >
+              Sign Out Session
+            </Button>
           </div>
         </CardContent>
       </Card>

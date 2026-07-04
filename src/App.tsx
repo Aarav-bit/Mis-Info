@@ -4,6 +4,8 @@ import { ThemeProvider } from './contexts/ThemeContext'
 import { VerificationProvider } from './contexts/VerificationContext'
 import { ToastProvider } from './components/ui/Toaster'
 import { AppLayout } from './components/layout/AppLayout'
+import { AuthProvider } from './contexts/AuthContext'
+import { ProtectedRoute } from './components/layout/ProtectedRoute'
 
 // ⚡ Bolt Performance Optimization:
 // Why: The application bundle was >1MB because all pages were loaded synchronously.
@@ -16,6 +18,8 @@ const HistoryPage = React.lazy(() => import('./pages/HistoryPage').then(m => ({ 
 const AnalyticsPage = React.lazy(() => import('./pages/AnalyticsPage').then(m => ({ default: m.AnalyticsPage })))
 const SettingsPage = React.lazy(() => import('./pages/SettingsPage').then(m => ({ default: m.SettingsPage })))
 const AboutPage = React.lazy(() => import('./pages/AboutPage').then(m => ({ default: m.AboutPage })))
+const LoginPage = React.lazy(() => import('./pages/LoginPage').then(m => ({ default: m.LoginPage })))
+const SignupPage = React.lazy(() => import('./pages/SignupPage').then(m => ({ default: m.SignupPage })))
 
 // Simple loading fallback
 const PageLoader = () => (
@@ -27,23 +31,30 @@ const PageLoader = () => (
 export default function App() {
   return (
     <BrowserRouter>
-      <ThemeProvider>
-        <VerificationProvider>
-          <ToastProvider>
-            <Routes>
-              <Route path="/" element={<Suspense fallback={<PageLoader />}><LandingPage /></Suspense>} />
-              <Route element={<AppLayout />}>
-                <Route path="/dashboard" element={<Suspense fallback={<PageLoader />}><DashboardPage /></Suspense>} />
-                <Route path="/report/:id" element={<Suspense fallback={<PageLoader />}><ReportPage /></Suspense>} />
-                <Route path="/history" element={<Suspense fallback={<PageLoader />}><HistoryPage /></Suspense>} />
-                <Route path="/analytics" element={<Suspense fallback={<PageLoader />}><AnalyticsPage /></Suspense>} />
-                <Route path="/settings" element={<Suspense fallback={<PageLoader />}><SettingsPage /></Suspense>} />
-                <Route path="/about" element={<Suspense fallback={<PageLoader />}><AboutPage /></Suspense>} />
-              </Route>
-            </Routes>
-          </ToastProvider>
-        </VerificationProvider>
-      </ThemeProvider>
+      <AuthProvider>
+        <ThemeProvider>
+          <VerificationProvider>
+            <ToastProvider>
+              <Routes>
+                <Route path="/" element={<Suspense fallback={<PageLoader />}><LandingPage /></Suspense>} />
+                <Route path="/login" element={<Suspense fallback={<PageLoader />}><LoginPage /></Suspense>} />
+                <Route path="/signup" element={<Suspense fallback={<PageLoader />}><SignupPage /></Suspense>} />
+                
+                <Route element={<ProtectedRoute />}>
+                  <Route element={<AppLayout />}>
+                    <Route path="/dashboard" element={<Suspense fallback={<PageLoader />}><DashboardPage /></Suspense>} />
+                    <Route path="/report/:id" element={<Suspense fallback={<PageLoader />}><ReportPage /></Suspense>} />
+                    <Route path="/history" element={<Suspense fallback={<PageLoader />}><HistoryPage /></Suspense>} />
+                    <Route path="/analytics" element={<Suspense fallback={<PageLoader />}><AnalyticsPage /></Suspense>} />
+                    <Route path="/settings" element={<Suspense fallback={<PageLoader />}><SettingsPage /></Suspense>} />
+                    <Route path="/about" element={<Suspense fallback={<PageLoader />}><AboutPage /></Suspense>} />
+                  </Route>
+                </Route>
+              </Routes>
+            </ToastProvider>
+          </VerificationProvider>
+        </ThemeProvider>
+      </AuthProvider>
     </BrowserRouter>
   )
 }
