@@ -132,11 +132,15 @@ const DotField = memo(({
       m.prevY = m.y;
     }
 
-    const speedInterval = setInterval(updateMouseSpeed, 20);
+    // ⚡ Bolt Performance Optimization:
+    // Why: Polling mouse speed via setInterval(20ms) ran asynchronously from the requestAnimationFrame loop, wasting CPU cycles and potentially causing jitter.
+    // What: Removed setInterval and moved the updateMouseSpeed logic directly into the render loop (tick).
+    // Impact: Eliminates unnecessary background timers, syncing calculations precisely with frame rendering (60fps).
 
     let frameCount = 0;
 
     function tick() {
+      updateMouseSpeed();
       frameCount++;
       const dots = dotsRef.current;
       const m = mouseRef.current;
@@ -248,7 +252,6 @@ const DotField = memo(({
       if (rafRef.current !== null) {
         cancelAnimationFrame(rafRef.current);
       }
-      clearInterval(speedInterval);
       clearTimeout(resizeTimer);
       window.removeEventListener('resize', resize);
       window.removeEventListener('mousemove', onMouseMove);
