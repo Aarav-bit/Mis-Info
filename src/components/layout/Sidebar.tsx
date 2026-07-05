@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { useLocation } from 'react-router-dom'
+import { useLocation, Link } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   LayoutDashboard, History, BarChart3, Settings, Info,
@@ -51,7 +51,7 @@ export function Sidebar({ open, onToggle }: SidebarProps) {
       )}
     >
       {/* Logo */}
-      <div className="flex items-center gap-3 p-4 border-b border-white/10 h-16 bg-[#09070f]">
+      <Link to="/" className="flex items-center gap-3 p-4 border-b border-white/10 h-16 bg-[#09070f] hover:opacity-95 transition-opacity">
         <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-[#D0FF00]/20 border border-[#D0FF00]/40 flex items-center justify-center">
           <Shield size={16} className="text-[#D0FF00]" />
         </div>
@@ -71,7 +71,7 @@ export function Sidebar({ open, onToggle }: SidebarProps) {
             </motion.div>
           )}
         </AnimatePresence>
-      </div>
+      </Link>
 
       {/* Nav Items with GooeyNav */}
       <div className="flex-1 px-2 py-3 mt-4 overflow-x-hidden overflow-y-auto scrollbar-hide">

@@ -62,12 +62,12 @@ export function LoginPage() {
           backgroundSize: '32px 32px'
         }} />
         <div className="relative z-10 w-full max-w-md flex flex-col items-center gap-6">
-          <div className="flex items-center gap-2">
+          <Link to="/" className="flex items-center gap-2 hover:opacity-85 transition-opacity">
             <Shield size={24} className="text-[#D0FF00]" />
             <span className="font-display font-bold text-xl tracking-tight text-white uppercase">
               MIS<span className="text-[#D0FF00]">·</span>INFO
             </span>
-          </div>
+          </Link>
           <SignIn signUpUrl="/signup" fallbackRedirectUrl="/dashboard" />
         </div>
       </div>
@@ -100,9 +100,9 @@ export function LoginPage() {
 
         {/* Header */}
         <div className="text-center mb-8">
-          <div className="w-12 h-12 rounded-xl bg-[#D0FF00]/10 border border-[#D0FF00]/30 flex items-center justify-center mx-auto mb-4">
+          <Link to="/" className="w-12 h-12 rounded-xl bg-[#D0FF00]/10 border border-[#D0FF00]/30 flex items-center justify-center mx-auto mb-4 hover:opacity-85 transition-opacity block">
             <Shield size={22} className="text-[#D0FF00]" />
-          </div>
+          </Link>
           <h1 className="text-xl font-display font-semibold text-white tracking-tight">Access verification Console</h1>
           <p className="text-[#8E8A9F] text-xs font-mono mt-1 uppercase">Enter credentials to proceed</p>
         </div>
