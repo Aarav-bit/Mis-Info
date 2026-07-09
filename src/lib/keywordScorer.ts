@@ -139,22 +139,32 @@ export function computeKeywordScore(
   };
 }
 
+const ruleCache = new WeakMap<Map<string, KeywordRule>, { allKeywords: string[], keywordFreqCache: Map<string, number> }>();
+
 export function findBestRuleMatch(
   input: string,
   rules: Map<string, KeywordRule>
 ): { ruleId: string; scoredRule: ScoredRule } | null {
-  const allKeywords: string[] = [];
-  const keywordFreqCache = new Map<string, number>();
+  let cache = ruleCache.get(rules);
+  if (!cache) {
+    const allKeywords: string[] = [];
+    const keywordFreqCache = new Map<string, number>();
 
-  for (const rule of rules.values()) {
-    if (rule.required) allKeywords.push(...rule.required);
-    if (rule.optional) allKeywords.push(...rule.optional);
+    for (const rule of rules.values()) {
+      if (rule.required) allKeywords.push(...rule.required);
+      if (rule.optional) allKeywords.push(...rule.optional);
+    }
+
+    for (const kw of allKeywords) {
+      const lower = kw.toLowerCase();
+      keywordFreqCache.set(lower, (keywordFreqCache.get(lower) || 0) + 1);
+    }
+
+    cache = { allKeywords, keywordFreqCache };
+    ruleCache.set(rules, cache);
   }
-  
-  for (const kw of allKeywords) {
-    const lower = kw.toLowerCase();
-    keywordFreqCache.set(lower, (keywordFreqCache.get(lower) || 0) + 1);
-  }
+
+  const { allKeywords, keywordFreqCache } = cache;
 
   let bestMatch: { ruleId: string; scoredRule: ScoredRule } | null = null;
   let bestScore = 0;

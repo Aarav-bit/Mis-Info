@@ -486,9 +486,10 @@ function buildRuleMap(): Map<string, KeywordRule> {
   return map
 }
 
+const RULE_MAP = buildRuleMap()
+
 function simulateAnalysis(input: string, type: 'text' | 'url' | 'screenshot'): VerificationReport {
-  const ruleMap = buildRuleMap()
-  const matched = findBestRuleMatch(input, ruleMap)
+  const matched = findBestRuleMatch(input, RULE_MAP)
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let baseReport: any
@@ -714,9 +715,7 @@ export function VerificationProvider({ children }: { children: React.ReactNode }
     // Rule engine: fall back to local keyword database if no API reports found
     let ruleScore = 50
     if (!evidenceReport && !knowledgeReport) {
-      const ruleMatch = findBestRuleMatch(cleanQuery, new Map(
-        Array.from(RULE_DATABASE.entries()).map(([k, v]) => [k, v.keywords])
-      ))
+      const ruleMatch = findBestRuleMatch(cleanQuery, RULE_MAP)
       if (ruleMatch) {
         const entry = RULE_DATABASE.get(ruleMatch.ruleId)
         ruleScore = entry ? entry.report.trustScore : 50
