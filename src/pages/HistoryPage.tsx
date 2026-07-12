@@ -7,6 +7,15 @@ import { Badge } from '../components/ui/Badge'
 import { Button } from '../components/ui/Button'
 import { Card, CardContent } from '../components/ui/Card'
 import { formatDate } from '../lib/utils'
+import { VerificationReport } from '../types'
+
+// ⚡ Bolt Performance Optimization:
+// Why: Calling .toLowerCase() on thousands of string properties inside a filter loop on every keystroke
+//      causes excessive memory allocation and GC pauses.
+// What: Implemented a module-level WeakMap to cache the lowercased strings per report object reference.
+// Impact: Reduces O(N) string allocations per render down to O(1) after the initial cache population,
+//         significantly improving search input responsiveness for large datasets.
+const searchStringCache = new WeakMap<VerificationReport, { claim: string, topic: string }>()
 
 export function HistoryPage() {
   const navigate = useNavigate()
@@ -21,7 +30,13 @@ export function HistoryPage() {
   const filtered = useMemo(() => {
     const lowerSearch = search.toLowerCase()
     return reports.filter(r => {
-      const matchesSearch = r.claim.toLowerCase().includes(lowerSearch) || r.topic.toLowerCase().includes(lowerSearch)
+      let cached = searchStringCache.get(r)
+      if (!cached) {
+        cached = { claim: r.claim.toLowerCase(), topic: r.topic.toLowerCase() }
+        searchStringCache.set(r, cached)
+      }
+
+      const matchesSearch = cached.claim.includes(lowerSearch) || cached.topic.includes(lowerSearch)
       const matchesFilter = filter === 'all' || (filter === 'bookmarked' && r.bookmarked)
       const matchesCategory = categoryFilter === 'all' || r.topic === categoryFilter
       return matchesSearch && matchesFilter && matchesCategory
