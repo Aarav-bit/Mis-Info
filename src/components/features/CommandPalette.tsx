@@ -22,12 +22,32 @@ export function CommandPalette({ open, onClose }: CommandPaletteProps) {
   const navigate = useNavigate()
   const [query, setQuery] = useState('')
 
-  const filtered = commands.filter(c =>
-    c.label.toLowerCase().includes(query.toLowerCase()) ||
-    c.group.toLowerCase().includes(query.toLowerCase())
-  )
+  // ⚡ Bolt Performance Optimization:
+  // Why: Previously, filtering commands and extracting unique groups was done on every render.
+  // Moreover, inside the render loop, `filtered.filter(c => c.group === group)` was called for each group.
+  // What: Wrapped the filtering and grouping logic in `useMemo` and created a pre-grouped dictionary.
+  // Impact: Reduces time complexity from O(N + G*N) to O(N) per render when `query` changes,
+  // preventing unnecessary recalculations during unrelated state updates.
+  const { groupedCommands, groupKeys } = React.useMemo(() => {
+    const lowerQuery = query.toLowerCase()
+    const filtered = commands.filter(c =>
+      c.label.toLowerCase().includes(lowerQuery) ||
+      c.group.toLowerCase().includes(lowerQuery)
+    )
 
-  const groups = [...new Set(filtered.map(c => c.group))]
+    const grouped: Record<string, typeof commands> = {}
+    for (const cmd of filtered) {
+      if (!grouped[cmd.group]) {
+        grouped[cmd.group] = []
+      }
+      grouped[cmd.group].push(cmd)
+    }
+
+    return {
+      groupedCommands: grouped,
+      groupKeys: Object.keys(grouped)
+    }
+  }, [query])
 
   const handleSelect = useCallback((path: string) => {
     navigate(path)
@@ -67,13 +87,13 @@ export function CommandPalette({ open, onClose }: CommandPaletteProps) {
                 <kbd className="text-[10px] text-muted-foreground border border-border rounded px-1.5 py-0.5">ESC</kbd>
               </div>
               <div className="p-2 max-h-72 overflow-auto">
-                {groups.length === 0 ? (
+                {groupKeys.length === 0 ? (
                   <p className="text-center text-sm text-muted-foreground py-6">No results found.</p>
                 ) : (
-                  groups.map(group => (
+                  groupKeys.map(group => (
                     <div key={group} className="mb-2">
                       <p className="px-2 py-1 text-xs font-medium text-muted-foreground uppercase tracking-wider">{group}</p>
-                      {filtered.filter(c => c.group === group).map(cmd => (
+                      {groupedCommands[group].map(cmd => (
                         <button
                           key={cmd.id}
                           onClick={() => handleSelect(cmd.path)}
