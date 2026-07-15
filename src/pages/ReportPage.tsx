@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useMemo } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import {
@@ -97,8 +97,23 @@ export function ReportPage() {
   const statusVariant = report.trustScore >= 75 ? 'success' : report.trustScore >= 50 ? 'warning' : 'danger'
   const glowColor = report.trustScore >= 75 ? 'rgba(34,197,94,0.15)' : report.trustScore >= 50 ? 'rgba(234,179,8,0.15)' : 'rgba(239,68,68,0.12)'
   const glowBorder = report.trustScore >= 75 ? 'rgba(34,197,94,0.25)' : report.trustScore >= 50 ? 'rgba(234,179,8,0.25)' : 'rgba(239,68,68,0.22)'
-  const supportingSources = report.sources.filter(s => s.supportsClaim)
-  const contradictingSources = report.sources.filter(s => !s.supportsClaim)
+
+  // ⚡ Bolt Performance Optimization:
+  // Why: Multiple .filter() calls over report.sources run on every render unnecessarily.
+  // What: Merged array partitioning into a single O(n) loop and wrapped in useMemo.
+  // Impact: Provides referential equality to prevent unnecessary re-renders in child components and halves the CPU cycles needed for source categorization.
+  const { supportingSources, contradictingSources } = useMemo(() => {
+    const supporting = []
+    const contradicting = []
+    for (const source of report.sources) {
+      if (source.supportsClaim) {
+        supporting.push(source)
+      } else {
+        contradicting.push(source)
+      }
+    }
+    return { supportingSources: supporting, contradictingSources: contradicting }
+  }, [report.sources])
 
   const hasScoreBreakdown = !!report.scoreBreakdown
   const hasLinguisticFlags = !!(report.linguisticRiskFlags && report.linguisticRiskFlags.length)
