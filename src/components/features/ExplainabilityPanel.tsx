@@ -1,4 +1,4 @@
-import React, { useRef } from 'react'
+import React, { useRef, useMemo } from 'react'
 import { motion, useInView } from 'framer-motion'
 import { CheckCircle, XCircle, AlertTriangle, Languages, FileSearch, Lightbulb, ThumbsUp } from 'lucide-react'
 import type { VerificationReport } from '../../types'
@@ -53,9 +53,24 @@ export function ExplainabilityPanel({ report }: ExplainabilityPanelProps) {
   const ref = useRef<HTMLDivElement>(null)
   const inView = useInView(ref, { once: true, margin: '-40px' })
 
-  const supportingSources = report.sources.filter(s => s.supportsClaim)
-  const contradictingSources = report.sources.filter(s => !s.supportsClaim)
-  const detectedRisks = report.linguisticRiskFlags.filter(f => f.detected)
+  // ⚡ Bolt Performance Optimization:
+  // Why: Component recalculates array filters repeatedly when parent re-renders (like inView state changes).
+  // What: Merged source partitioning into one O(n) loop and memoized all filter results using useMemo.
+  // Impact: Decreases render cycle duration and reduces memory allocations.
+  const { supportingSources, contradictingSources } = useMemo(() => {
+    const supporting = []
+    const contradicting = []
+    for (const source of report.sources) {
+      if (source.supportsClaim) {
+        supporting.push(source)
+      } else {
+        contradicting.push(source)
+      }
+    }
+    return { supportingSources: supporting, contradictingSources: contradicting }
+  }, [report.sources])
+
+  const detectedRisks = useMemo(() => report.linguisticRiskFlags.filter(f => f.detected), [report.linguisticRiskFlags])
 
   const cards = [
     {
