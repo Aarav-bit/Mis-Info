@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react'
+import React, { useState, useCallback, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { LayoutDashboard, History, BarChart3, Settings, Info, Shield, Search, ArrowRight } from 'lucide-react'
@@ -22,12 +22,19 @@ export function CommandPalette({ open, onClose }: CommandPaletteProps) {
   const navigate = useNavigate()
   const [query, setQuery] = useState('')
 
-  const filtered = commands.filter(c =>
-    c.label.toLowerCase().includes(query.toLowerCase()) ||
-    c.group.toLowerCase().includes(query.toLowerCase())
-  )
-
-  const groups = [...new Set(filtered.map(c => c.group))]
+  // ⚡ Bolt Performance Optimization:
+  // Why: Filtering and grouping the command list ran on every render and created unnecessary string allocations by calling toLowerCase() repeatedly.
+  // What: Extracted query.toLowerCase() outside the loop and wrapped the filter/group logic in useMemo to prevent unnecessary re-computations.
+  // Impact: Reduces CPU overhead and garbage collection pressure while typing in the command palette, providing a smoother experience.
+  const { filtered, groups } = useMemo(() => {
+    const lowerQuery = query.toLowerCase()
+    const filteredCommands = commands.filter(c =>
+      c.label.toLowerCase().includes(lowerQuery) ||
+      c.group.toLowerCase().includes(lowerQuery)
+    )
+    const uniqueGroups = [...new Set(filteredCommands.map(c => c.group))]
+    return { filtered: filteredCommands, groups: uniqueGroups }
+  }, [query])
 
   const handleSelect = useCallback((path: string) => {
     navigate(path)
