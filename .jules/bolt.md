@@ -3,3 +3,6 @@
 ## 2024-05-18 - Route-level code splitting
 **Learning:** The initial Vite bundle was >1MB because all pages (including Recharts dependencies in AnalyticsPage) were loaded synchronously in `App.tsx`.
 **Action:** Used `React.lazy` and `Suspense` for route-level code splitting. Wrapped each individual route in `<Suspense>` to avoid layout thrashing when navigating. This successfully split `AnalyticsPage` into its own chunk, cutting the main bundle size in half.
+## 2025-02-12 - Prevent O(N) Re-renders in React Mapped Lists with Memoization
+**Learning:** In complex views (like the vault search in `HistoryPage.tsx`), returning raw JSX elements from an array `.map()` triggers expensive React reconciliations/re-renders (though not unmounts, as long as keys are stable) for *all* items whenever a single item changes (e.g. toggling a bookmark). This O(N) re-render behavior severely bottlenecks UI thread performance as the list size grows.
+**Action:** Always extract complex list items into separate components and apply `React.memo()`. Pair this with `useCallback` for any event handlers passed into the list item to ensure reference stability, enabling React to skip rendering for items whose props have not meaningfully changed.
