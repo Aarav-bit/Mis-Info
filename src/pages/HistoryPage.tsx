@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react'
+import React, { useState, useMemo, useDeferredValue } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { Search, Bookmark, BookmarkCheck, Clock, ArrowRight, FolderKanban } from 'lucide-react'
@@ -12,21 +12,27 @@ export function HistoryPage() {
   const navigate = useNavigate()
   const { reports, toggleBookmark } = useVerification()
   const [search, setSearch] = useState('')
+  const deferredSearch = useDeferredValue(search)
   const [filter, setFilter] = useState<'all' | 'bookmarked'>('all')
   const [categoryFilter, setCategoryFilter] = useState<string>('all')
 
   // Get unique topics for category filter
   const topics = useMemo(() => ['all', ...Array.from(new Set(reports.map(r => r.topic)))], [reports])
 
+  // ⚡ Bolt Performance Optimization:
+  // Why: Filtering a potentially massive archive of reports synchronously on every keystroke blocked the main thread and caused UI lag.
+  // What: Defers the search filter computation using React.useDeferredValue().
+  // Impact: Keeps the text input instantly responsive while processing the large list filter in the background.
+  // Measurement: Verify typing responsiveness on the History page search input when dealing with hundreds/thousands of indexed records.
   const filtered = useMemo(() => {
-    const lowerSearch = search.toLowerCase()
+    const lowerSearch = deferredSearch.toLowerCase()
     return reports.filter(r => {
       const matchesSearch = r.claim.toLowerCase().includes(lowerSearch) || r.topic.toLowerCase().includes(lowerSearch)
       const matchesFilter = filter === 'all' || (filter === 'bookmarked' && r.bookmarked)
       const matchesCategory = categoryFilter === 'all' || r.topic === categoryFilter
       return matchesSearch && matchesFilter && matchesCategory
     })
-  }, [reports, search, filter, categoryFilter])
+  }, [reports, deferredSearch, filter, categoryFilter])
 
   // Large mock counts mapped to show vault data
   const stats = useMemo(() => {
