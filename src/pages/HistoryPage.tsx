@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react'
+import React, { useState, useMemo, useDeferredValue } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { Search, Bookmark, BookmarkCheck, Clock, ArrowRight, FolderKanban } from 'lucide-react'
@@ -12,21 +12,27 @@ export function HistoryPage() {
   const navigate = useNavigate()
   const { reports, toggleBookmark } = useVerification()
   const [search, setSearch] = useState('')
+  const deferredSearch = useDeferredValue(search)
   const [filter, setFilter] = useState<'all' | 'bookmarked'>('all')
   const [categoryFilter, setCategoryFilter] = useState<string>('all')
 
   // Get unique topics for category filter
   const topics = useMemo(() => ['all', ...Array.from(new Set(reports.map(r => r.topic)))], [reports])
 
+  // ⚡ Bolt Performance Optimization:
+  // Why: Filtering a potentially large array of reports on every keystroke was blocking the main thread and causing input lag.
+  // What: Wrapped the `search` state with `React.useDeferredValue(search)` and used it in the filter dependency array.
+  // Impact: Prevents the O(n) filter operation from blocking the main thread on every keystroke, keeping the search input highly responsive.
+  // Measurement: Input latency remains low even with a large number of reports to filter through.
   const filtered = useMemo(() => {
-    const lowerSearch = search.toLowerCase()
+    const lowerSearch = deferredSearch.toLowerCase()
     return reports.filter(r => {
       const matchesSearch = r.claim.toLowerCase().includes(lowerSearch) || r.topic.toLowerCase().includes(lowerSearch)
       const matchesFilter = filter === 'all' || (filter === 'bookmarked' && r.bookmarked)
       const matchesCategory = categoryFilter === 'all' || r.topic === categoryFilter
       return matchesSearch && matchesFilter && matchesCategory
     })
-  }, [reports, search, filter, categoryFilter])
+  }, [reports, deferredSearch, filter, categoryFilter])
 
   // Large mock counts mapped to show vault data
   const stats = useMemo(() => {
