@@ -97,8 +97,24 @@ export function ReportPage() {
   const statusVariant = report.trustScore >= 75 ? 'success' : report.trustScore >= 50 ? 'warning' : 'danger'
   const glowColor = report.trustScore >= 75 ? 'rgba(34,197,94,0.15)' : report.trustScore >= 50 ? 'rgba(234,179,8,0.15)' : 'rgba(239,68,68,0.12)'
   const glowBorder = report.trustScore >= 75 ? 'rgba(34,197,94,0.25)' : report.trustScore >= 50 ? 'rgba(234,179,8,0.25)' : 'rgba(239,68,68,0.22)'
-  const supportingSources = report.sources.filter(s => s.supportsClaim)
-  const contradictingSources = report.sources.filter(s => !s.supportsClaim)
+
+  // ⚡ Bolt Performance Optimization:
+  // Why: Multiple .filter() calls over report.sources caused unnecessary repeated iterations on every render.
+  // What: Collapsed into a single O(n) pass wrapped in useMemo.
+  // Impact: Reduces operations by half when categorizing sources, avoiding unnecessary re-renders.
+  // Measurement: Verify ReportPage mounts normally and displays sources correctly without redundant array traversals.
+  const { supportingSources, contradictingSources } = React.useMemo(() => {
+    const supporting = []
+    const contradicting = []
+    for (const source of report.sources) {
+      if (source.supportsClaim) {
+        supporting.push(source)
+      } else {
+        contradicting.push(source)
+      }
+    }
+    return { supportingSources: supporting, contradictingSources: contradicting }
+  }, [report.sources])
 
   const hasScoreBreakdown = !!report.scoreBreakdown
   const hasLinguisticFlags = !!(report.linguisticRiskFlags && report.linguisticRiskFlags.length)
