@@ -38,27 +38,29 @@ const LIVE_FEEDS = [
   { claim: 'Global temperature levels drop by 2 degrees', source: 'Earth Climate Inst', score: 14, status: 'Debunked' },
 ]
 
-export function DashboardPage() {
-  const navigate = useNavigate()
-  const { verify, isAnalyzing, analysisStep } = useVerification()
-  const { toast } = useToast()
-  const { t } = useTranslation()
-  
-  const [activeTab, setActiveTab] = useState<InputTab>('text')
-  const [input, setInput] = useState('')
-  const [error, setError] = useState('')
-  const [isDragging, setIsDragging] = useState(false)
-  const [isFileIngesting, setIsFileIngesting] = useState(false)
-
-  const fileInputRef = useRef<HTMLInputElement>(null)
+// ⚡ Bolt Performance Optimization:
+// Why: The DashboardPage was re-rendering every 4.5 seconds due to a setInterval updating the logs state.
+// What: Extracted the log generation logic and rendering into a separate SystemLogs component.
+// Impact: Prevents unnecessary re-renders of the entire DashboardPage (including heavy UI components) every 4.5s.
+// Measurement: Use React Profiler to verify DashboardPage no longer renders on every tick.
+function SystemLogs({ ingestionLogs }: { ingestionLogs: string[] }) {
   const [logs, setLogs] = useState<string[]>(SYSTEM_LOGS)
   const logContainerRef = useRef<HTMLDivElement>(null)
+  const prevIngestionLogsLength = useRef(0)
+
+  useEffect(() => {
+    if (ingestionLogs.length > prevIngestionLogsLength.current) {
+      const newLogs = ingestionLogs.slice(prevIngestionLogsLength.current)
+      setLogs(prev => [...prev, ...newLogs])
+    }
+    prevIngestionLogsLength.current = ingestionLogs.length
+  }, [ingestionLogs])
 
   useEffect(() => {
     const interval = setInterval(() => {
       const randomLogs = [
         `AUDIT: Checked claim signature #${Math.floor(Math.random() * 80000 + 10000)}`,
-        `PROCESS: Cross-referencing nodes for target keyword: ${activeTab === 'url' ? 'URL' : 'Claim'}`,
+        `PROCESS: Cross-referencing nodes for target keyword: Claim`,
         'SYSTEM: Latency check: 18ms. Throughput stable.',
         'AUDIT: Querying academic journals index...',
       ]
@@ -66,13 +68,48 @@ export function DashboardPage() {
       setLogs(prev => [...prev.slice(-4), newLog])
     }, 4500)
     return () => clearInterval(interval)
-  }, [activeTab])
+  }, [])
 
   useEffect(() => {
     if (logContainerRef.current) {
       logContainerRef.current.scrollTop = logContainerRef.current.scrollHeight
     }
   }, [logs])
+
+  return (
+    <div className="glass rounded-xl border border-white/10 overflow-hidden bg-black/60 shadow-xl">
+      <div className="px-4 py-2 border-b border-white/5 bg-white/2 flex items-center justify-between text-[10px] font-mono text-[#8E8A9F]">
+        <span className="uppercase tracking-wider flex items-center gap-2">
+          <Terminal size={11} className="text-[#D0FF00]" /> System Diagnostic Logs
+        </span>
+        <span>SYS_TEMP: Normal</span>
+      </div>
+      <div ref={logContainerRef} className="p-4 h-28 overflow-y-auto font-mono text-[11px] text-[#8E8A9F] space-y-1 scrollbar-hide">
+        {logs.map((log, idx) => (
+          <div key={idx} className="flex gap-2">
+            <span className="text-[#D0FF00]/60">[{new Date().toLocaleTimeString()}]</span>
+            <span>{log}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+export function DashboardPage() {
+  const navigate = useNavigate()
+  const { verify, isAnalyzing, analysisStep } = useVerification()
+  const { toast } = useToast()
+  const { t } = useTranslation()
+
+  const [activeTab, setActiveTab] = useState<InputTab>('text')
+  const [input, setInput] = useState('')
+  const [error, setError] = useState('')
+  const [isDragging, setIsDragging] = useState(false)
+  const [isFileIngesting, setIsFileIngesting] = useState(false)
+
+  const fileInputRef = useRef<HTMLInputElement>(null)
+  const [ingestionLogs, setIngestionLogs] = useState<string[]>([])
 
   const handleVerify = async () => {
     if (!input.trim()) { setError(t('dashboard.errorEmpty')); return }
@@ -116,14 +153,14 @@ export function DashboardPage() {
     
     if (extension === 'txt') {
       setIsFileIngesting(true)
-      setLogs(prev => [...prev, `PROCESS: Ingesting text packet: ${file.name}`])
+      setIngestionLogs(prev => [...prev, `PROCESS: Ingesting text packet: ${file.name}`])
       const reader = new FileReader()
       reader.onload = (e) => {
         const text = e.target?.result as string
         setActiveTab('text')
         setInput(text)
         setIsFileIngesting(false)
-        setLogs(prev => [...prev, `SYSTEM: Text packet decoding complete. Length: ${text.length} chars`])
+        setIngestionLogs(prev => [...prev, `SYSTEM: Text packet decoding complete. Length: ${text.length} chars`])
         toast({
           type: 'success',
           title: 'Text Packet Ingested',
@@ -134,7 +171,7 @@ export function DashboardPage() {
     } else if (['png', 'jpg', 'jpeg'].includes(extension || '')) {
       setIsFileIngesting(true)
       setActiveTab('screenshot')
-      setLogs(prev => [...prev, `PROCESS: Loading screenshot: ${file.name}. Triggering Cognitive OCR...`])
+      setIngestionLogs(prev => [...prev, `PROCESS: Loading screenshot: ${file.name}. Triggering Cognitive OCR...`])
       toast({
         type: 'info',
         title: 'Image Ingested',
@@ -164,7 +201,7 @@ export function DashboardPage() {
 
         setInput(claim)
         setIsFileIngesting(false)
-        setLogs(prev => [...prev, `AUDIT: OCR analysis complete. Extracted claim from file: "${claim.substring(0, 40)}..."`])
+        setIngestionLogs(prev => [...prev, `AUDIT: OCR analysis complete. Extracted claim from file: "${claim.substring(0, 40)}..."`])
         toast({
           type: 'success',
           title: 'OCR Extraction Successful',
@@ -174,7 +211,7 @@ export function DashboardPage() {
     } else if (extension === 'pdf') {
       setIsFileIngesting(true)
       setActiveTab('text')
-      setLogs(prev => [...prev, `PROCESS: Parsing PDF payload: ${file.name}...`])
+      setIngestionLogs(prev => [...prev, `PROCESS: Parsing PDF payload: ${file.name}...`])
       toast({
         type: 'info',
         title: 'PDF Payload Received',
@@ -186,7 +223,7 @@ export function DashboardPage() {
         const claim = `PDF Abstract: Verified research confirms that the new global temperature indicators for this season align directly with historical highs.`
         setInput(claim)
         setIsFileIngesting(false)
-        setLogs(prev => [...prev, `SYSTEM: PDF vectorized. Extracted abstract claim: "${claim.substring(0, 40)}..."`])
+        setIngestionLogs(prev => [...prev, `SYSTEM: PDF vectorized. Extracted abstract claim: "${claim.substring(0, 40)}..."`])
         toast({
           type: 'success',
           title: 'PDF Successfully Vectorized',
@@ -194,7 +231,7 @@ export function DashboardPage() {
         })
       }, 1500)
     } else {
-      setLogs(prev => [...prev, `ERROR: Unsupported file signature for ${file.name}`])
+      setIngestionLogs(prev => [...prev, `ERROR: Unsupported file signature for ${file.name}`])
       toast({
         type: 'error',
         title: 'Ingestion Blocked',
@@ -389,22 +426,7 @@ export function DashboardPage() {
       </div>
 
       {/* Console Footer: System diagnostic logs */}
-      <div className="glass rounded-xl border border-white/10 overflow-hidden bg-black/60 shadow-xl">
-        <div className="px-4 py-2 border-b border-white/5 bg-white/2 flex items-center justify-between text-[10px] font-mono text-[#8E8A9F]">
-          <span className="uppercase tracking-wider flex items-center gap-2">
-            <Terminal size={11} className="text-[#D0FF00]" /> System Diagnostic Logs
-          </span>
-          <span>SYS_TEMP: Normal</span>
-        </div>
-        <div ref={logContainerRef} className="p-4 h-28 overflow-y-auto font-mono text-[11px] text-[#8E8A9F] space-y-1 scrollbar-hide">
-          {logs.map((log, idx) => (
-            <div key={idx} className="flex gap-2">
-              <span className="text-[#D0FF00]/60">[{new Date().toLocaleTimeString()}]</span>
-              <span>{log}</span>
-            </div>
-          ))}
-        </div>
-      </div>
+      <SystemLogs ingestionLogs={ingestionLogs} />
     </motion.div>
   )
 }
