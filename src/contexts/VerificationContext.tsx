@@ -478,6 +478,11 @@ const RULE_DATABASE: Map<string, RuleEntry> = new Map([
   ]
 ]);
 
+// ⚡ Bolt Performance Optimization:
+// Why: The rule map was being repeatedly built on every verification/analysis call, which allocated new Map instances and re-iterated the database unnecessarily.
+// What: Pre-computed the rule map once on initialization and reused it across all verifications.
+// Impact: Eliminates O(N) allocations and iteration overhead during critical verification paths, reducing garbage collection pressure.
+// Measurement: Verification latency should see a marginal decrease due to removed map creation overhead.
 function buildRuleMap(): Map<string, KeywordRule> {
   const map = new Map<string, KeywordRule>()
   RULE_DATABASE.forEach((entry, id) => {
@@ -486,9 +491,10 @@ function buildRuleMap(): Map<string, KeywordRule> {
   return map
 }
 
+const RULE_MAP = buildRuleMap()
+
 function simulateAnalysis(input: string, type: 'text' | 'url' | 'screenshot'): VerificationReport {
-  const ruleMap = buildRuleMap()
-  const matched = findBestRuleMatch(input, ruleMap)
+  const matched = findBestRuleMatch(input, RULE_MAP)
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let baseReport: any
@@ -714,9 +720,7 @@ export function VerificationProvider({ children }: { children: React.ReactNode }
     // Rule engine: fall back to local keyword database if no API reports found
     let ruleScore = 50
     if (!evidenceReport && !knowledgeReport) {
-      const ruleMatch = findBestRuleMatch(cleanQuery, new Map(
-        Array.from(RULE_DATABASE.entries()).map(([k, v]) => [k, v.keywords])
-      ))
+      const ruleMatch = findBestRuleMatch(cleanQuery, RULE_MAP)
       if (ruleMatch) {
         const entry = RULE_DATABASE.get(ruleMatch.ruleId)
         ruleScore = entry ? entry.report.trustScore : 50
