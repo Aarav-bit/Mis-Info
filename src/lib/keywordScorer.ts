@@ -139,22 +139,38 @@ export function computeKeywordScore(
   };
 }
 
+// ⚡ Bolt Performance Optimization:
+// Why: `findBestRuleMatch` was recalculating the global keyword frequency map (`keywordFreqCache`) and `allKeywords` array on every single execution by iterating over all rules.
+// What: Implemented a WeakMap cache keyed on the `rules` Map instance. This caches `allKeywords` and `keywordFreqCache` for a given rule set.
+// Impact: Changes O(N) extraction to O(1) lookup, significantly reducing CPU work per verification.
+// Measurement: Profiler should show decreased time spent in `findBestRuleMatch` before the actual keyword scoring logic begins.
+const rulesCache = new WeakMap<Map<string, KeywordRule>, { allKeywords: string[], keywordFreqCache: Map<string, number> }>();
+
 export function findBestRuleMatch(
   input: string,
   rules: Map<string, KeywordRule>
 ): { ruleId: string; scoredRule: ScoredRule } | null {
-  const allKeywords: string[] = [];
-  const keywordFreqCache = new Map<string, number>();
-
-  for (const rule of rules.values()) {
-    if (rule.required) allKeywords.push(...rule.required);
-    if (rule.optional) allKeywords.push(...rule.optional);
-  }
+  let cached = rulesCache.get(rules);
   
-  for (const kw of allKeywords) {
-    const lower = kw.toLowerCase();
-    keywordFreqCache.set(lower, (keywordFreqCache.get(lower) || 0) + 1);
+  if (!cached) {
+    const allKeywords: string[] = [];
+    const keywordFreqCache = new Map<string, number>();
+
+    for (const rule of rules.values()) {
+      if (rule.required) allKeywords.push(...rule.required);
+      if (rule.optional) allKeywords.push(...rule.optional);
+    }
+
+    for (const kw of allKeywords) {
+      const lower = kw.toLowerCase();
+      keywordFreqCache.set(lower, (keywordFreqCache.get(lower) || 0) + 1);
+    }
+
+    cached = { allKeywords, keywordFreqCache };
+    rulesCache.set(rules, cached);
   }
+
+  const { allKeywords, keywordFreqCache } = cached;
 
   let bestMatch: { ruleId: string; scoredRule: ScoredRule } | null = null;
   let bestScore = 0;
