@@ -246,6 +246,19 @@ export async function queryFactCheckApi(
 
     const topic = guessTopic(query)
 
+    // ⚡ Bolt Performance Optimization:
+    // Why: Multiple .filter() iterations over the sources array to calculate consensus stats is an O(6n) operation.
+    // What: Collapsed calculations into a single O(n) loop.
+    // Impact: Substantially reduces CPU cycles during report generation, especially for claims with many sources.
+    let supportingCount = 0, contradictingCount = 0, tier1Count = 0, tier2Count = 0, tier3Count = 0
+    for (const s of sources) {
+      if (s.supportsClaim) supportingCount++
+      else contradictingCount++
+      if (s.reliability >= 90) tier1Count++
+      else if (s.reliability >= 70) tier2Count++
+      else tier3Count++
+    }
+
     return {
       id: generateId(),
       claim: query.length > 150 ? query.substring(0, 150) + '...' : query,
@@ -267,13 +280,13 @@ export async function queryFactCheckApi(
       scoreBreakdown: { sourceReliability: trustScore, evidenceAgreement: trustScore, semanticMatch: trustScore, linguisticRisk: 70, ruleEngine: 60 },
       linguisticRiskFlags: [],
       consensusData: {
-        agreementRatio: sources.filter((s: { supportsClaim: boolean }) => s.supportsClaim).length / Math.max(sources.length, 1),
+        agreementRatio: supportingCount / Math.max(sources.length, 1),
         totalSources: sources.length,
-        supportingCount: sources.filter((s: { supportsClaim: boolean }) => s.supportsClaim).length,
-        contradictingCount: sources.filter((s: { supportsClaim: boolean }) => !s.supportsClaim).length,
-        tier1Count: sources.filter((s: { reliability: number }) => s.reliability >= 90).length,
-        tier2Count: sources.filter((s: { reliability: number }) => s.reliability >= 70 && s.reliability < 90).length,
-        tier3Count: sources.filter((s: { reliability: number }) => s.reliability < 70).length,
+        supportingCount,
+        contradictingCount,
+        tier1Count,
+        tier2Count,
+        tier3Count,
         conflictDetected: false,
         manualReviewFlag: false,
       },
@@ -395,6 +408,19 @@ export async function queryWikipediaApi(
 
     const topic = guessTopic(query)
 
+    // ⚡ Bolt Performance Optimization:
+    // Why: Multiple .filter() iterations over the sources array to calculate consensus stats is an O(6n) operation.
+    // What: Collapsed calculations into a single O(n) loop.
+    // Impact: Substantially reduces CPU cycles during report generation, especially for claims with many sources.
+    let supportingCount = 0, contradictingCount = 0, tier1Count = 0, tier2Count = 0, tier3Count = 0
+    for (const s of sources) {
+      if (s.supportsClaim) supportingCount++
+      else contradictingCount++
+      if (s.reliability >= 90) tier1Count++
+      else if (s.reliability >= 70) tier2Count++
+      else tier3Count++
+    }
+
     return {
       id: generateId(),
       claim: query.length > 150 ? query.substring(0, 150) + '...' : query,
@@ -416,13 +442,13 @@ export async function queryWikipediaApi(
       scoreBreakdown: { sourceReliability: trustScore, evidenceAgreement: trustScore, semanticMatch: trustScore, linguisticRisk: 70, ruleEngine: 60 },
       linguisticRiskFlags: [],
       consensusData: {
-        agreementRatio: sources.filter((s: { supportsClaim: boolean }) => s.supportsClaim).length / Math.max(sources.length, 1),
+        agreementRatio: supportingCount / Math.max(sources.length, 1),
         totalSources: sources.length,
-        supportingCount: sources.filter((s: { supportsClaim: boolean }) => s.supportsClaim).length,
-        contradictingCount: sources.filter((s: { supportsClaim: boolean }) => !s.supportsClaim).length,
-        tier1Count: sources.filter((s: { reliability: number }) => s.reliability >= 90).length,
-        tier2Count: sources.filter((s: { reliability: number }) => s.reliability >= 70 && s.reliability < 90).length,
-        tier3Count: sources.filter((s: { reliability: number }) => s.reliability < 70).length,
+        supportingCount,
+        contradictingCount,
+        tier1Count,
+        tier2Count,
+        tier3Count,
         conflictDetected: false,
         manualReviewFlag: false,
       },
