@@ -11,7 +11,7 @@
  */
 
 import { Source, CredibilityFactor, VerificationReport } from '../types'
-import { generateId, getScoreStatus } from './utils'
+import { generateId, getScoreStatus, computeConsensusCounts } from './utils'
 
 // ── Token helpers (shared logic, isolated here to avoid circular imports) ─────
 const STOP_WORDS = new Set([
@@ -319,13 +319,7 @@ export async function queryEvidenceEngine(
     scoreBreakdown: { sourceReliability: trustScore, evidenceAgreement: trustScore, semanticMatch: trustScore, linguisticRisk: 70, ruleEngine: 60 },
     linguisticRiskFlags: [],
     consensusData: {
-      agreementRatio: sources.filter((s: { supportsClaim: boolean }) => s.supportsClaim).length / Math.max(sources.length, 1),
-      totalSources: sources.length,
-      supportingCount: sources.filter((s: { supportsClaim: boolean }) => s.supportsClaim).length,
-      contradictingCount: sources.filter((s: { supportsClaim: boolean }) => !s.supportsClaim).length,
-      tier1Count: sources.filter((s: { reliability: number }) => s.reliability >= 90).length,
-      tier2Count: sources.filter((s: { reliability: number }) => s.reliability >= 70 && s.reliability < 90).length,
-      tier3Count: sources.filter((s: { reliability: number }) => s.reliability < 70).length,
+      ...computeConsensusCounts(sources),
       conflictDetected: false,
       manualReviewFlag: false,
     },

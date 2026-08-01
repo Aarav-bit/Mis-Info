@@ -14,7 +14,7 @@
  */
 
 import { Source, CredibilityFactor } from '../types'
-import { generateId, getScoreStatus } from './utils'
+import { generateId, getScoreStatus, computeConsensusCounts } from './utils'
 import { VerificationReport } from '../types'
 
 export interface KnowledgeMatch {
@@ -282,13 +282,7 @@ export async function queryKnowledgeLayer(
     scoreBreakdown: { sourceReliability: trustScore, evidenceAgreement: trustScore, semanticMatch: Math.round(best.similarity * 100), linguisticRisk: 70, ruleEngine: 65 },
     linguisticRiskFlags: [],
     consensusData: {
-      agreementRatio: sources.filter((s: { supportsClaim: boolean }) => s.supportsClaim).length / Math.max(sources.length, 1),
-      totalSources: sources.length,
-      supportingCount: sources.filter((s: { supportsClaim: boolean }) => s.supportsClaim).length,
-      contradictingCount: sources.filter((s: { supportsClaim: boolean }) => !s.supportsClaim).length,
-      tier1Count: sources.filter((s: { reliability: number }) => s.reliability >= 90).length,
-      tier2Count: sources.filter((s: { reliability: number }) => s.reliability >= 70 && s.reliability < 90).length,
-      tier3Count: sources.filter((s: { reliability: number }) => s.reliability < 70).length,
+      ...computeConsensusCounts(sources),
       conflictDetected: false,
       manualReviewFlag: false,
     },

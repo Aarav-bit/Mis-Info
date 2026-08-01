@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useCallback } from 'react'
 import { VerificationReport } from '../types'
 import { MOCK_REPORTS } from '../data/mockData'
-import { generateId, getScoreStatus } from '../lib/utils'
+import { generateId, getScoreStatus, computeConsensusCounts } from '../lib/utils'
 import { KeywordRule, findBestRuleMatch, calibrateConfidence } from '../lib/keywordScorer'
 import { extractClaim } from '../lib/claimExtractor'
 import { analyzeLinguisticRisk } from '../lib/linguisticRisk'
@@ -816,14 +816,15 @@ export function VerificationProvider({ children }: { children: React.ReactNode }
 
 
     // Synthesize consensusData from available sources and consensus result
+    const consensusCounts = computeConsensusCounts(mergedSources)
     const consensusData = {
-      agreementRatio: consensus.agreement / 100,
-      totalSources: mergedSources.length,
-      supportingCount: mergedSources.filter((s: { supportsClaim: boolean }) => s.supportsClaim).length,
-      contradictingCount: mergedSources.filter((s: { supportsClaim: boolean }) => !s.supportsClaim).length,
-      tier1Count: mergedSources.filter((s: { reliability: number }) => s.reliability >= 90).length,
-      tier2Count: mergedSources.filter((s: { reliability: number }) => s.reliability >= 70 && s.reliability < 90).length,
-      tier3Count: mergedSources.filter((s: { reliability: number }) => s.reliability < 70).length,
+      agreementRatio: consensus.agreement / 100, // Keep existing agreement ratio logic
+      totalSources: consensusCounts.totalSources,
+      supportingCount: consensusCounts.supportingCount,
+      contradictingCount: consensusCounts.contradictingCount,
+      tier1Count: consensusCounts.tier1Count,
+      tier2Count: consensusCounts.tier2Count,
+      tier3Count: consensusCounts.tier3Count,
       conflictDetected: consensus.verdict === 'conflict',
       manualReviewFlag: consensus.flagForReview,
     }
