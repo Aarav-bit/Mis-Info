@@ -55,9 +55,20 @@ function tokenize(text: string): Set<string> {
 
 function jaccard(a: Set<string>, b: Set<string>): number {
   if (a.size === 0 || b.size === 0) return 0
-  const intersection = [...a].filter((x) => b.has(x)).length
-  const union = new Set([...a, ...b]).size
-  return intersection / union
+
+  // ⚡ Bolt Performance Optimization:
+  // Why: Creating new arrays and Sets for intersection and union allocates O(N+M) memory and requires multiple passes.
+  // What: Iterate over the smaller set to count intersection size, then calculate union size mathematically.
+  // Impact: Reduces time complexity to O(min(N,M)) and space complexity from O(N+M) to O(1), minimizing garbage collection overhead during intensive similarity checks.
+  // Measurement: Verify functionality via existing test suite; reduces memory allocations and JS heap usage during batch verification.
+  const smallerSet = a.size < b.size ? a : b;
+  const largerSet = a.size < b.size ? b : a;
+  let intersectionSize = 0;
+  for (const item of smallerSet) {
+    if (largerSet.has(item)) intersectionSize++;
+  }
+  const unionSize = a.size + b.size - intersectionSize;
+  return intersectionSize / unionSize;
 }
 
 // ── Wikipedia REST API ────────────────────────────────────────────────────────
