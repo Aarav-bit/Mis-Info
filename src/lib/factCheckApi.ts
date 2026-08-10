@@ -21,12 +21,22 @@ function getImportantTokens(text: string): Set<string> {
   )
 }
 
-// Compute Jaccard similarity of two sets of tokens
+// ⚡ Bolt Performance Optimization:
+// Why: Converting Sets to Arrays and using .filter() to find intersection creates unnecessary memory allocation and garbage collection overhead, especially in a function called frequently in a loop.
+// What: Replaced array spread and filter with an imperative for...of loop over the smaller set to count intersections.
+// Impact: Reduces time complexity from O(N+M) with extra allocations to O(min(N,M)) with zero allocations.
+// Measurement: Can be measured using performance.now() across multiple calculateJaccardSimilarity calls.
 function calculateJaccardSimilarity(setA: Set<string>, setB: Set<string>): number {
   if (setA.size === 0 || setB.size === 0) return 0
-  const intersection = new Set([...setA].filter(x => setB.has(x)))
-  const union = new Set([...setA, ...setB])
-  return intersection.size / union.size
+  let intersectionSize = 0;
+  const [smaller, larger] = setA.size < setB.size ? [setA, setB] : [setB, setA];
+  for (const item of smaller) {
+    if (larger.has(item)) {
+      intersectionSize++;
+    }
+  }
+  const unionSize = setA.size + setB.size - intersectionSize;
+  return intersectionSize / unionSize;
 }
 
 // Helper to guess the topic category of a claim

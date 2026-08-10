@@ -35,11 +35,22 @@ function tokenize(text: string): Set<string> {
   )
 }
 
+// ⚡ Bolt Performance Optimization:
+// Why: Using array spread and .filter() to calculate intersection size allocates unnecessary intermediate arrays, degrading performance in hot loops.
+// What: Swapped declarative filter for an imperative for...of loop over the smaller set.
+// Impact: Changes space complexity from O(N+M) to O(1) and iterates fewer times, speeding up evidence retrieval.
+// Measurement: Can be profiled using browser developer tools showing reduced GC pauses.
 function jaccard(a: Set<string>, b: Set<string>): number {
   if (a.size === 0 || b.size === 0) return 0
-  const intersection = [...a].filter((x) => b.has(x)).length
-  const union = new Set([...a, ...b]).size
-  return intersection / union
+  let intersectionSize = 0;
+  const [smaller, larger] = a.size < b.size ? [a, b] : [b, a];
+  for (const item of smaller) {
+    if (larger.has(item)) {
+      intersectionSize++;
+    }
+  }
+  const unionSize = a.size + b.size - intersectionSize;
+  return intersectionSize / unionSize;
 }
 
 // ── Rating converter (same logic as before) ───────────────────────────────────
