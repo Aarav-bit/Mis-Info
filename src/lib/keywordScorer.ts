@@ -61,13 +61,22 @@ export function computeKeywordScore(
   let matchedOptional: string[] = [];
   let matchedNegation: string[] = [];
   
+  // ⚡ Bolt Performance Optimization:
+  // Why: The regex replacement for morphological stems was running inside a .some() loop for every input token for every keyword rule, resulting in O(N*M) regex executions which blocks the main thread on large inputs.
+  // What: Extracted the keyword stemming logic out of the array iteration closure so it only runs once per keyword.
+  // Impact: Reduces regex evaluations during keyword matching from O(N*M*3) to O(M*3), significantly speeding up the rule engine for long texts.
+  // Measurement: Verify execution time of `findBestRuleMatch` for large queries with many rules.
+
   for (const kw of required) {
     const kwLower = kw.toLowerCase();
     if (inputPhrases.has(kwLower) || inputTokens.includes(kwLower)) {
       matchedRequired.push(kw);
-    } else if (inputTokens.some(t => t.startsWith(kwLower) || t.startsWith(kwLower.replace(/s$/, '').replace(/ed$/, '').replace(/ing$/, '')))) {
-      // Stem-like matching for morphological variants
-      matchedRequired.push(kw);
+    } else {
+      const kwStem = kwLower.replace(/s$/, '').replace(/ed$/, '').replace(/ing$/, '');
+      if (inputTokens.some(t => t.startsWith(kwLower) || t.startsWith(kwStem))) {
+        // Stem-like matching for morphological variants
+        matchedRequired.push(kw);
+      }
     }
   }
   
@@ -75,8 +84,11 @@ export function computeKeywordScore(
     const kwLower = kw.toLowerCase();
     if (inputPhrases.has(kwLower) || inputTokens.includes(kwLower)) {
       matchedOptional.push(kw);
-    } else if (inputTokens.some(t => t.startsWith(kwLower) || t.startsWith(kwLower.replace(/s$/, '').replace(/ed$/, '').replace(/ing$/, '')))) {
-      matchedOptional.push(kw);
+    } else {
+      const kwStem = kwLower.replace(/s$/, '').replace(/ed$/, '').replace(/ing$/, '');
+      if (inputTokens.some(t => t.startsWith(kwLower) || t.startsWith(kwStem))) {
+        matchedOptional.push(kw);
+      }
     }
   }
   
@@ -84,8 +96,11 @@ export function computeKeywordScore(
     const kwLower = kw.toLowerCase();
     if (inputPhrases.has(kwLower) || inputTokens.includes(kwLower)) {
       matchedNegation.push(kw);
-    } else if (inputTokens.some(t => t.startsWith(kwLower) || t.startsWith(kwLower.replace(/s$/, '').replace(/ed$/, '').replace(/ing$/, '')))) {
-      matchedNegation.push(kw);
+    } else {
+      const kwStem = kwLower.replace(/s$/, '').replace(/ed$/, '').replace(/ing$/, '');
+      if (inputTokens.some(t => t.startsWith(kwLower) || t.startsWith(kwStem))) {
+        matchedNegation.push(kw);
+      }
     }
   }
   
