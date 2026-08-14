@@ -298,6 +298,39 @@ export async function queryEvidenceEngine(
     ? `This claim has been reviewed by professional fact-checking organizations. Their aggregate rating yields a trust score of ${trustScore}/100.`
     : `No dedicated fact-checks found yet, but ${news?.articles.length ?? 0} news source(s) have reported on this topic, suggesting it has real-world coverage.`
 
+
+  // ⚡ Bolt Performance Optimization:
+  // Why: Multiple .filter() iterations over the sources array to calculate counts caused unnecessary O(k*n) operations.
+  // What: Collapsed the array iterations into a single O(n) pass using a for loop.
+  // Impact: Reduces consensus data calculation time and prevents repeated array traversals.
+  // Measurement: Check execution time of API verification flows.
+  let supportingCount = 0;
+  let contradictingCount = 0;
+  let tier1Count = 0;
+  let tier2Count = 0;
+  let tier3Count = 0;
+
+  for (const s of sources) {
+    if (s.supportsClaim) supportingCount++;
+    else contradictingCount++;
+
+    if (s.reliability >= 90) tier1Count++;
+    else if (s.reliability >= 70) tier2Count++;
+    else tier3Count++;
+  }
+
+  const consensusData = {
+      agreementRatio: supportingCount / Math.max(sources.length, 1),
+      totalSources: sources.length,
+      supportingCount,
+      contradictingCount,
+      tier1Count,
+      tier2Count,
+      tier3Count,
+      conflictDetected: false,
+      manualReviewFlag: false,
+  }
+
   return {
     id: generateId(),
     claim: query.length > 150 ? query.substring(0, 150) + '…' : query,
@@ -318,17 +351,7 @@ export async function queryEvidenceEngine(
     credibilityFactors,
     scoreBreakdown: { sourceReliability: trustScore, evidenceAgreement: trustScore, semanticMatch: trustScore, linguisticRisk: 70, ruleEngine: 60 },
     linguisticRiskFlags: [],
-    consensusData: {
-      agreementRatio: sources.filter((s: { supportsClaim: boolean }) => s.supportsClaim).length / Math.max(sources.length, 1),
-      totalSources: sources.length,
-      supportingCount: sources.filter((s: { supportsClaim: boolean }) => s.supportsClaim).length,
-      contradictingCount: sources.filter((s: { supportsClaim: boolean }) => !s.supportsClaim).length,
-      tier1Count: sources.filter((s: { reliability: number }) => s.reliability >= 90).length,
-      tier2Count: sources.filter((s: { reliability: number }) => s.reliability >= 70 && s.reliability < 90).length,
-      tier3Count: sources.filter((s: { reliability: number }) => s.reliability < 70).length,
-      conflictDetected: false,
-      manualReviewFlag: false,
-    },
+    consensusData,
     createdAt: new Date().toISOString(),
     bookmarked: false,
     topic: 'General',

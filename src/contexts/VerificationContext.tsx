@@ -815,15 +815,35 @@ export function VerificationProvider({ children }: { children: React.ReactNode }
     ]
 
 
+// ⚡ Bolt Performance Optimization:
+    // Why: Multiple .filter() iterations over the sources array to calculate counts caused unnecessary O(k*n) operations.
+    // What: Collapsed the array iterations into a single O(n) pass using a for loop.
+    // Impact: Reduces consensus data calculation time and prevents repeated array traversals.
+    // Measurement: Check execution time of API verification flows or context state updates.
+    let supportingCount = 0;
+    let contradictingCount = 0;
+    let tier1Count = 0;
+    let tier2Count = 0;
+    let tier3Count = 0;
+
+    for (const s of mergedSources) {
+      if (s.supportsClaim) supportingCount++;
+      else contradictingCount++;
+
+      if (s.reliability >= 90) tier1Count++;
+      else if (s.reliability >= 70) tier2Count++;
+      else tier3Count++;
+    }
+
     // Synthesize consensusData from available sources and consensus result
     const consensusData = {
       agreementRatio: consensus.agreement / 100,
       totalSources: mergedSources.length,
-      supportingCount: mergedSources.filter((s: { supportsClaim: boolean }) => s.supportsClaim).length,
-      contradictingCount: mergedSources.filter((s: { supportsClaim: boolean }) => !s.supportsClaim).length,
-      tier1Count: mergedSources.filter((s: { reliability: number }) => s.reliability >= 90).length,
-      tier2Count: mergedSources.filter((s: { reliability: number }) => s.reliability >= 70 && s.reliability < 90).length,
-      tier3Count: mergedSources.filter((s: { reliability: number }) => s.reliability < 70).length,
+      supportingCount,
+      contradictingCount,
+      tier1Count,
+      tier2Count,
+      tier3Count,
       conflictDetected: consensus.verdict === 'conflict',
       manualReviewFlag: consensus.flagForReview,
     }
