@@ -35,10 +35,19 @@ function tokenize(text: string): Set<string> {
   )
 }
 
+// ⚡ Bolt Performance Optimization:
+// Why: The previous jaccard implementation allocated new arrays and sets on every call, causing memory churn and GC pauses, especially since it's called frequently during retrieval.
+// What: Replaced array/set allocations with a zero-allocation for-of loop that calculates intersection size, and computes union mathematically.
+// Impact: Eliminates O(N) memory allocations per call, improving CPU performance and reducing GC overhead.
+// Measurement: Profile memory allocations during search operations or measure retrieval latency.
 function jaccard(a: Set<string>, b: Set<string>): number {
   if (a.size === 0 || b.size === 0) return 0
-  const intersection = [...a].filter((x) => b.has(x)).length
-  const union = new Set([...a, ...b]).size
+  let intersection = 0
+  const [smaller, larger] = a.size < b.size ? [a, b] : [b, a]
+  for (const item of smaller) {
+    if (larger.has(item)) intersection++
+  }
+  const union = a.size + b.size - intersection
   return intersection / union
 }
 
