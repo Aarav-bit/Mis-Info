@@ -55,8 +55,19 @@ function tokenize(text: string): Set<string> {
 
 function jaccard(a: Set<string>, b: Set<string>): number {
   if (a.size === 0 || b.size === 0) return 0
-  const intersection = [...a].filter((x) => b.has(x)).length
-  const union = new Set([...a, ...b]).size
+
+  // ⚡ Bolt Performance Optimization: O(n) Jaccard Similarity without allocations
+  // Why: Previous implementation created intermediate arrays (`[...a]`) and a new Set (`new Set([...a, ...b])`), causing GC pressure and O(n+m) allocations for every comparison in a hot loop during text analysis.
+  // What: Iterates over the smaller set directly to count intersection, and computes union mathematically (`a + b - intersection`).
+  // Impact: Eliminates array and Set allocations completely per call, reducing memory overhead and improving execution speed for similarity checks.
+  // Measurement: O(1) memory instead of O(n+m), reducing execution time for similarity scoring in large evidence processing.
+  let intersection = 0
+  const [smaller, larger] = a.size < b.size ? [a, b] : [b, a]
+  for (const item of smaller) {
+    if (larger.has(item)) intersection++
+  }
+
+  const union = a.size + b.size - intersection
   return intersection / union
 }
 
