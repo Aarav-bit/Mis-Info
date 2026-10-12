@@ -1,3 +1,3 @@
-## 2024-06-18 - Set Similarity in Hot Loops
-**Learning:** Found multiple instances of `jaccard` similarity manually spreading Sets into arrays (`[...a].filter()`) and creating entirely new Sets for unions (`new Set([...a, ...b])`). In an evidence retrieval engine doing heavy string tokenization, this causes massive GC churn.
-**Action:** Always check `Set` operations in NLP/text processing. Replace allocation-heavy union logic with mathematical `union = a.size + b.size - intersection` and iterate over the smaller set.
+## 2026-10-12 - Keyword Scoring Hot Path GC Pressure
+**Learning:** `getNgrams` and array slicing/joining, as well as repeated inline `.replace` regex calls for stemming within array `.some()` loops, created significant GC pressure and performance bottlenecks in the keyword scoring logic for textual analysis.
+**Action:** When dealing with frequent string manipulations in hot loops (like NLP or token analysis), prefer precomputing tokens, using in-place concatenation instead of array map/join, and hoisting regex manipulations outside inner loops to avoid creating many temporary objects and closures.
