@@ -61,11 +61,17 @@ export function computeKeywordScore(
   let matchedOptional: string[] = [];
   let matchedNegation: string[] = [];
   
+  // ⚡ Bolt Performance Optimization:
+  // Why: Regex replacements (`replace(/s$/, '')...`) were evaluated inside the `inputTokens.some` loop for every token, resulting in O(N*M) regex executions per rule.
+  // What: Hoisted the keyword stemming logic outside the loop.
+  // Impact: Reduces CPU overhead by eliminating redundant regex executions.
+  // Measurement: O(M) regex executions instead of O(N*M), improving execution speed during rule matching.
   for (const kw of required) {
     const kwLower = kw.toLowerCase();
+    const kwStem = kwLower.replace(/s$/, '').replace(/ed$/, '').replace(/ing$/, '');
     if (inputPhrases.has(kwLower) || inputTokens.includes(kwLower)) {
       matchedRequired.push(kw);
-    } else if (inputTokens.some(t => t.startsWith(kwLower) || t.startsWith(kwLower.replace(/s$/, '').replace(/ed$/, '').replace(/ing$/, '')))) {
+    } else if (inputTokens.some(t => t.startsWith(kwLower) || t.startsWith(kwStem))) {
       // Stem-like matching for morphological variants
       matchedRequired.push(kw);
     }
@@ -73,18 +79,20 @@ export function computeKeywordScore(
   
   for (const kw of optional) {
     const kwLower = kw.toLowerCase();
+    const kwStem = kwLower.replace(/s$/, '').replace(/ed$/, '').replace(/ing$/, '');
     if (inputPhrases.has(kwLower) || inputTokens.includes(kwLower)) {
       matchedOptional.push(kw);
-    } else if (inputTokens.some(t => t.startsWith(kwLower) || t.startsWith(kwLower.replace(/s$/, '').replace(/ed$/, '').replace(/ing$/, '')))) {
+    } else if (inputTokens.some(t => t.startsWith(kwLower) || t.startsWith(kwStem))) {
       matchedOptional.push(kw);
     }
   }
   
   for (const kw of negation) {
     const kwLower = kw.toLowerCase();
+    const kwStem = kwLower.replace(/s$/, '').replace(/ed$/, '').replace(/ing$/, '');
     if (inputPhrases.has(kwLower) || inputTokens.includes(kwLower)) {
       matchedNegation.push(kw);
-    } else if (inputTokens.some(t => t.startsWith(kwLower) || t.startsWith(kwLower.replace(/s$/, '').replace(/ed$/, '').replace(/ing$/, '')))) {
+    } else if (inputTokens.some(t => t.startsWith(kwLower) || t.startsWith(kwStem))) {
       matchedNegation.push(kw);
     }
   }
