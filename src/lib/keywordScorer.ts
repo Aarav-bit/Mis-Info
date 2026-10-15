@@ -63,9 +63,11 @@ export function computeKeywordScore(
   
   for (const kw of required) {
     const kwLower = kw.toLowerCase();
+    // ⚡ Bolt: Cache regex replacement outside the loop to prevent O(n*m) regex evaluations
+    const kwStem = kwLower.replace(/s$/, '').replace(/ed$/, '').replace(/ing$/, '');
     if (inputPhrases.has(kwLower) || inputTokens.includes(kwLower)) {
       matchedRequired.push(kw);
-    } else if (inputTokens.some(t => t.startsWith(kwLower) || t.startsWith(kwLower.replace(/s$/, '').replace(/ed$/, '').replace(/ing$/, '')))) {
+    } else if (inputTokens.some(t => t.startsWith(kwLower) || t.startsWith(kwStem))) {
       // Stem-like matching for morphological variants
       matchedRequired.push(kw);
     }
@@ -73,18 +75,22 @@ export function computeKeywordScore(
   
   for (const kw of optional) {
     const kwLower = kw.toLowerCase();
+    // ⚡ Bolt: Cache regex replacement outside the loop to prevent O(n*m) regex evaluations
+    const kwStem = kwLower.replace(/s$/, '').replace(/ed$/, '').replace(/ing$/, '');
     if (inputPhrases.has(kwLower) || inputTokens.includes(kwLower)) {
       matchedOptional.push(kw);
-    } else if (inputTokens.some(t => t.startsWith(kwLower) || t.startsWith(kwLower.replace(/s$/, '').replace(/ed$/, '').replace(/ing$/, '')))) {
+    } else if (inputTokens.some(t => t.startsWith(kwLower) || t.startsWith(kwStem))) {
       matchedOptional.push(kw);
     }
   }
   
   for (const kw of negation) {
     const kwLower = kw.toLowerCase();
+    // ⚡ Bolt: Cache regex replacement outside the loop to prevent O(n*m) regex evaluations
+    const kwStem = kwLower.replace(/s$/, '').replace(/ed$/, '').replace(/ing$/, '');
     if (inputPhrases.has(kwLower) || inputTokens.includes(kwLower)) {
       matchedNegation.push(kw);
-    } else if (inputTokens.some(t => t.startsWith(kwLower) || t.startsWith(kwLower.replace(/s$/, '').replace(/ed$/, '').replace(/ing$/, '')))) {
+    } else if (inputTokens.some(t => t.startsWith(kwLower) || t.startsWith(kwStem))) {
       matchedNegation.push(kw);
     }
   }
