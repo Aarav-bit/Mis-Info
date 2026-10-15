@@ -478,17 +478,17 @@ const RULE_DATABASE: Map<string, RuleEntry> = new Map([
   ]
 ]);
 
-function buildRuleMap(): Map<string, KeywordRule> {
-  const map = new Map<string, KeywordRule>()
-  RULE_DATABASE.forEach((entry, id) => {
-    map.set(id, entry.keywords)
-  })
-  return map
-}
+// ⚡ Bolt Performance Optimization:
+// Why: `buildRuleMap` and mapping `RULE_DATABASE.entries()` inside `verify` dynamically re-creates identical Maps on every lookup.
+// What: Created a single static `STATIC_RULE_MAP` computed once at module load.
+// Impact: Eliminates O(n) iteration, object allocations, and Map initializations on every analysis simulation and verification fallback.
+// Measurement: Reduces CPU time during local rule fallback, improving responsiveness of fast path queries.
+const STATIC_RULE_MAP: Map<string, KeywordRule> = new Map(
+  Array.from(RULE_DATABASE.entries()).map(([k, v]) => [k, v.keywords])
+);
 
 function simulateAnalysis(input: string, type: 'text' | 'url' | 'screenshot'): VerificationReport {
-  const ruleMap = buildRuleMap()
-  const matched = findBestRuleMatch(input, ruleMap)
+  const matched = findBestRuleMatch(input, STATIC_RULE_MAP)
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let baseReport: any
@@ -714,9 +714,7 @@ export function VerificationProvider({ children }: { children: React.ReactNode }
     // Rule engine: fall back to local keyword database if no API reports found
     let ruleScore = 50
     if (!evidenceReport && !knowledgeReport) {
-      const ruleMatch = findBestRuleMatch(cleanQuery, new Map(
-        Array.from(RULE_DATABASE.entries()).map(([k, v]) => [k, v.keywords])
-      ))
+      const ruleMatch = findBestRuleMatch(cleanQuery, STATIC_RULE_MAP)
       if (ruleMatch) {
         const entry = RULE_DATABASE.get(ruleMatch.ruleId)
         ruleScore = entry ? entry.report.trustScore : 50

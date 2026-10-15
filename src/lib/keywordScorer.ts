@@ -139,22 +139,36 @@ export function computeKeywordScore(
   };
 }
 
+// ⚡ Bolt Performance Optimization:
+// Why: `findBestRuleMatch` historically recalculated `allKeywords` and `keywordFreqCache` on every invocation, traversing the entire `rules` map which is computationally expensive (O(R*K)).
+// What: Introduced a `WeakMap` cache (`ruleCache`) tied to the `rules` map instance.
+// Impact: With the global `STATIC_RULE_MAP`, `findBestRuleMatch` will compute the metadata only once, turning a repetitive O(R*K) operation into an O(1) cache lookup for subsequent calls.
+// Measurement: Eliminates redundant iteration and object creation for rule frequency calculation on every input analysis.
+const ruleCache = new WeakMap<Map<string, KeywordRule>, { allKeywords: string[], keywordFreqCache: Map<string, number> }>();
+
 export function findBestRuleMatch(
   input: string,
   rules: Map<string, KeywordRule>
 ): { ruleId: string; scoredRule: ScoredRule } | null {
-  const allKeywords: string[] = [];
-  const keywordFreqCache = new Map<string, number>();
+  let cacheData = ruleCache.get(rules);
+  if (!cacheData) {
+    const allKeywords: string[] = [];
+    const keywordFreqCache = new Map<string, number>();
 
-  for (const rule of rules.values()) {
-    if (rule.required) allKeywords.push(...rule.required);
-    if (rule.optional) allKeywords.push(...rule.optional);
+    for (const rule of rules.values()) {
+      if (rule.required) allKeywords.push(...rule.required);
+      if (rule.optional) allKeywords.push(...rule.optional);
+    }
+
+    for (const kw of allKeywords) {
+      const lower = kw.toLowerCase();
+      keywordFreqCache.set(lower, (keywordFreqCache.get(lower) || 0) + 1);
+    }
+    cacheData = { allKeywords, keywordFreqCache };
+    ruleCache.set(rules, cacheData);
   }
-  
-  for (const kw of allKeywords) {
-    const lower = kw.toLowerCase();
-    keywordFreqCache.set(lower, (keywordFreqCache.get(lower) || 0) + 1);
-  }
+
+  const { allKeywords, keywordFreqCache } = cacheData;
 
   let bestMatch: { ruleId: string; scoredRule: ScoredRule } | null = null;
   let bestScore = 0;
